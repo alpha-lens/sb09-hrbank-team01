@@ -62,14 +62,14 @@ CREATE TABLE IF NOT EXISTS employee_histories (
     CONSTRAINT chk_history_type CHECK (type IN ('CREATED', 'UPDATED', 'DELETED'))
     );
 
-CREATE INDEX idx_history_employee_number ON employee_histories (employee_number);
-CREATE INDEX idx_history_type            ON employee_histories (type);
-CREATE INDEX idx_history_created_at      ON employee_histories (created_at);
-CREATE INDEX idx_history_ip_address      ON employee_histories (ip_address);
+CREATE INDEX IF NOT EXISTS idx_history_employee_number ON employee_histories (employee_number);
+CREATE INDEX IF NOT EXISTS idx_history_type            ON employee_histories (type);
+CREATE INDEX IF NOT EXISTS idx_history_created_at      ON employee_histories (created_at);
+CREATE INDEX IF NOT EXISTS idx_history_ip_address      ON employee_histories (ip_address);
 
 -- 5. backup (데이터 백업 이력)
 CREATE TABLE IF NOT EXISTS backups (
-    id          BIGSERIAL    PRIMARY KEY,dksl
+    id          BIGSERIAL    PRIMARY KEY,
     worker      VARCHAR(50)  NOT NULL,                  -- IP 주소 또는 "system"
     started_at  TIMESTAMP    NOT NULL DEFAULT now(),
     ended_at    TIMESTAMP,                              -- 진행중이면 NULL
@@ -83,5 +83,5 @@ CREATE TABLE IF NOT EXISTS backups (
     ON DELETE SET NULL
     );
 
-CREATE INDEX idx_backup_status     ON backups (status);
-CREATE INDEX idx_backup_started_at ON backups (started_at);
+CREATE INDEX IF NOT EXISTS idx_backup_status     ON backups (status);
+CREATE INDEX IF NOT EXISTS idx_backup_started_at ON backups (started_at);
