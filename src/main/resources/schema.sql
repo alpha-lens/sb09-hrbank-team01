@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS department (
+CREATE TABLE IF NOT EXISTS departments (
     id                BIGSERIAL    PRIMARY KEY,
     name              VARCHAR(100) NOT NULL,
     description       VARCHAR(500),
@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS department (
     CONSTRAINT uk_department_name UNIQUE (name)
 );
 
-CREATE TABLE IF NOT EXISTS binary_content (
+CREATE TABLE IF NOT EXISTS binary_contents (
     id            BIGSERIAL    PRIMARY KEY,
     file_name     VARCHAR(255) NOT NULL,
     content_type  VARCHAR(100) NOT NULL,
@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS binary_content (
     created_at    TIMESTAMP    NOT NULL DEFAULT now()
 );
 
-CREATE TABLE IF NOT EXISTS employee (
+CREATE TABLE IF NOT EXISTS employees (
     id                BIGSERIAL    PRIMARY KEY,
     employee_number   VARCHAR(20)  NOT NULL,
     name              VARCHAR(50)  NOT NULL,
@@ -36,21 +36,21 @@ CREATE TABLE IF NOT EXISTS employee (
 
     CONSTRAINT fk_employee_department
         FOREIGN KEY (department_id)
-            REFERENCES department (id)
+            REFERENCES departments (id)
             ON DELETE RESTRICT,
 
     CONSTRAINT fk_employee_profile_image
         FOREIGN KEY (profile_image_id)
-            REFERENCES binary_content (id)
+            REFERENCES binary_contents (id)
             ON DELETE SET NULL
 );
 
-CREATE INDEX idx_employee_department ON employee (department_id);
-CREATE INDEX idx_employee_status     ON employee (status);
-CREATE INDEX idx_employee_hire_date  ON employee (hire_date);
-CREATE INDEX idx_employee_name       ON employee (name);
+CREATE INDEX IF NOT EXISTS idx_employee_department ON employees (department_id);
+CREATE INDEX IF NOT EXISTS idx_employee_status     ON employees (status);
+CREATE INDEX IF NOT EXISTS idx_employee_hire_date  ON employees (hire_date);
+CREATE INDEX IF NOT EXISTS idx_employee_name       ON employees (name);
 
-CREATE TABLE IF NOT EXISTS employee_history (
+CREATE TABLE IF NOT EXISTS employee_histories (
     id               BIGSERIAL    PRIMARY KEY,
     type             VARCHAR(20)  NOT NULL,
     employee_number  VARCHAR(20)  NOT NULL,
@@ -62,13 +62,13 @@ CREATE TABLE IF NOT EXISTS employee_history (
     CONSTRAINT chk_history_type CHECK (type IN ('CREATED', 'UPDATED', 'DELETED'))
 );
 
-CREATE INDEX idx_history_employee_number ON employee_history (employee_number);
-CREATE INDEX idx_history_type            ON employee_history (type);
-CREATE INDEX idx_history_created_at      ON employee_history (created_at);
-CREATE INDEX idx_history_ip_address      ON employee_history (ip_address);
+CREATE INDEX idx_history_employee_number ON employee_histories (employee_number);
+CREATE INDEX idx_history_type            ON employee_histories (type);
+CREATE INDEX idx_history_created_at      ON employee_histories (created_at);
+CREATE INDEX idx_history_ip_address      ON employee_histories (ip_address);
 
 -- 5. backup (데이터 백업 이력)
-CREATE TABLE IF NOT EXISTS backup (
+CREATE TABLE IF NOT EXISTS backups (
     id          BIGSERIAL    PRIMARY KEY,
     worker      VARCHAR(50)  NOT NULL,                  -- IP 주소 또는 "system"
     started_at  TIMESTAMP    NOT NULL DEFAULT now(),
@@ -79,9 +79,9 @@ CREATE TABLE IF NOT EXISTS backup (
     CONSTRAINT chk_backup_status CHECK (status IN ('IN_PROGRESS', 'COMPLETED', 'FAILED', 'SKIPPED')),
     CONSTRAINT fk_backup_file
       FOREIGN KEY (file_id)
-          REFERENCES binary_content (id)
+          REFERENCES binary_contents (id)
           ON DELETE SET NULL
 );
 
-CREATE INDEX idx_backup_status     ON backup (status);
-CREATE INDEX idx_backup_started_at ON backup (started_at);
+CREATE INDEX idx_backup_status     ON backups (status);
+CREATE INDEX idx_backup_started_at ON backups (started_at);
