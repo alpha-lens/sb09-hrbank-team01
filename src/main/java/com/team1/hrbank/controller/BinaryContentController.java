@@ -3,8 +3,8 @@ package com.team1.hrbank.controller;
 import com.team1.hrbank.dto.BinaryContentDto;
 import com.team1.hrbank.entity.BinaryContent;
 import com.team1.hrbank.service.BinaryContentService;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -18,6 +18,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
 @RestController
@@ -46,20 +48,27 @@ public class BinaryContentController {
     }
 
     @GetMapping("/{id}/download")
-    public ResponseEntity<byte[]> download(@PathVariable Long id) {
+    public void download(@PathVariable Long id, HttpServletResponse response) throws IOException {
         BinaryContentDto metadata = binaryContentService.getMetadata(id);
         byte[] bytes = binaryContentService.getBytes(id);
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.parseMediaType(metadata.contentType()));
-        headers.setContentLength(bytes.length);
-        headers.setContentDisposition(
-                ContentDisposition.builder("attachment")
-                        .filename(metadata.fileName(), StandardCharsets.UTF_8)
-                        .build()
-        );
+        String fileName = metadata.fileName();
+        String encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8)
+                .replaceAll("\\+", "%20");
 
-        return new ResponseEntity<>(bytes, headers, HttpStatus.OK);
+        response.setContentType(metadata.contentType());
+        response.setContentLengthLong(bytes.length);
+        response.setCharacterEncoding("UTF-8");
+        boolean isAscii = fileName.chars().allMatch(c -> c < 128);
+        if (isAscii) {
+            response.setHeader("Content-Disposition",
+                    "attachment; filename=\"" + fileName + "\"");
+        } else {
+            response.setHeader("Content-Disposition",
+                    "attachment; filename=\"" + encodedFileName + "\"; filename*=UTF-8''" + encodedFileName);
+        }
+        response.getOutputStream().write(bytes);
+        response.getOutputStream().flush();
     }
 
     @DeleteMapping("/{id}")
