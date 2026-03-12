@@ -52,6 +52,8 @@ public class BackupServiceImpl implements BackupService {
   private int chunkSize;
 
   /* ── 백업 실행 ───────────────────────────────────────── */
+  // 트랜잭션을 걸지 않는 이유
+  // STEP.2 save() 후 즉시 커밋되어야 STEP.3 진행 중에도 API 조회가 가능하기 때문
   @Override
   public BackupDto runBackup(String worker) {
 
@@ -107,7 +109,8 @@ public class BackupServiceImpl implements BackupService {
       Long lastId,
       int size) {
 
-    BackupSearchRequest req = new BackupSearchRequest();
+    BackupSearchRequest req = new BackupSearchRequest(
+        worker, startedAtFrom, startedAtTo, status, sortField, lastId, size);
 
     // 정렬 조건 결정
     Sort sort = "endedAt".equalsIgnoreCase(sortField)
@@ -116,7 +119,8 @@ public class BackupServiceImpl implements BackupService {
 
     // 동적 조건 + 정렬 적용
     Specification<Backup> spec = BackupSpecification.findByCondition(req);
-    List<Backup> results = backupRepository.findAll(spec, sort);
+    List<Backup> results = backupRepository.findAll(spec,
+        PageRequest.of(0, size + 1, sort)).getContent();
 
     // size + 1 조회로 hasNext 판별
     boolean hasNext = results.size() > size;
@@ -125,7 +129,8 @@ public class BackupServiceImpl implements BackupService {
     }
 
     // totalElements (커서 조건 제외)
-    BackupSearchRequest countReq = new BackupSearchRequest();
+    BackupSearchRequest countReq = new BackupSearchRequest(
+        worker, startedAtFrom, startedAtTo, status, sortField, null, size);
     long totalElements = backupRepository.count(
         BackupSpecification.findByCondition(countReq));
 
@@ -245,7 +250,7 @@ public class BackupServiceImpl implements BackupService {
 
     } catch (IOException ioEx) {
       log.error("[Backup] 에러 로그 저장 실패 backupId={}", backupId, ioEx);
-      return null;
+      return null; // null이 backup.fail()로 전달됨
     }
   }
 
@@ -257,6 +262,8 @@ public class BackupServiceImpl implements BackupService {
         escapeCsv(emp.getName()),
         escapeCsv(emp.getEmail()),
         escapeCsv(emp.getDepartment().getName()),
+        //TODO - EmployeeRepository에 fetch join 쿼리 추가 후 사용
+        // @Query("SELECT e FROM Employee e JOIN FETCH e.department")Page<Employee> findAllWithDepartment(Pageable pageable);
         escapeCsv(emp.getPosition()),
         emp.getHireDate().toString(),
         emp.getStatus().name()

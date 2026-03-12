@@ -2,19 +2,16 @@ package com.team1.hrbank.dto.request;
 
 import com.team1.hrbank.entity.BackupStatus;
 import java.time.Instant;
-import lombok.Getter;
-import lombok.Setter;
 
-@Getter
-@Setter
-public class BackupSearchRequest {
 
-  private String worker;
-  private Instant startedAtFrom;
-  private Instant startedAtTo;
-  private BackupStatus status;
+public record BackupSearchRequest(
+    String worker,
+    Instant startedAtFrom,
+    Instant startedAtTo,
+    BackupStatus status,
+    String sortField,
+    Long lastId,
+    int size
+) {
 
-  private String sortField = "startedAt";
-  private Long   lastId;
-  private int size = 10;
 }

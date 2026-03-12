@@ -8,6 +8,7 @@ public record EmployeeHistoryDto(
     String employeeNumber,
     String memo,
     String ipAddress,
+
     Instant at
 ) {
 
