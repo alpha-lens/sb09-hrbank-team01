@@ -82,6 +82,3 @@ CREATE TABLE IF NOT EXISTS backups (
     REFERENCES binary_contents (id)
     ON DELETE SET NULL
     );
-
-CREATE INDEX IF NOT EXISTS idx_backup_status     ON backups (status);
-CREATE INDEX IF NOT EXISTS idx_backup_started_at ON backups (started_at);
