@@ -2,7 +2,7 @@ package com.team1.hrbank.dto;
 
 import java.util.List;
 
-public record ChangeLogDetailDto(
+public record EmployeeHistoryDetailDto(
     long id,
     String type,
     String employeeNumber,
