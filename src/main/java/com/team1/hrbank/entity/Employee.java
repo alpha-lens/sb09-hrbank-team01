@@ -11,7 +11,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
-import java.time.Instant;
 import java.time.LocalDate;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -26,11 +25,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class Employee extends BaseUpdatableEntity {
-  @Column(length = 20, nullable = false)
+  @Column(length = 20, nullable = false, unique = true)
   private String employeeNumber;
   @Column(length = 50, nullable = false)
   private String name;
-  @Column(length = 100, nullable = false)
+  @Column(length = 100, nullable = false, unique = true)
   private String email;
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "department_id", nullable = false)
@@ -44,7 +43,7 @@ public class Employee extends BaseUpdatableEntity {
   private Status status;
   @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
   @JoinColumn(name = "profile_image_id")
-  private ProfileImage profileImageId;
+  private ProfileImage profileImage;
 
   public static Employee of(String employeeNumber, String name, String email, Department department, String position) {
     return Employee.builder()
@@ -65,5 +64,9 @@ public class Employee extends BaseUpdatableEntity {
     this.position = position;
     this.hireDate = hireDate;
     this.status = status;
+  }
+
+  public void updateProfileImage(ProfileImage profileImage) {
+    this.profileImage = profileImage;
   }
 }
