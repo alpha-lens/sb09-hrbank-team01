@@ -1,7 +1,6 @@
 package com.team1.hrbank.entity;
 
 import com.team1.hrbank.entity.base.BaseUpdatableEntity;
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -41,9 +40,9 @@ public class Employee extends BaseUpdatableEntity {
   @Enumerated(EnumType.STRING)
   @Column(name = "status", nullable = false)
   private Status status;
-  @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+  @OneToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "profile_image_id")
-  private ProfileImage profileImage;
+  private BinaryContent profileImage;
 
   public static Employee of(String employeeNumber, String name, String email, Department department, String position) {
     return Employee.builder()
@@ -66,7 +65,7 @@ public class Employee extends BaseUpdatableEntity {
     this.status = status;
   }
 
-  public void updateProfileImage(ProfileImage profileImage) {
+  public void updateProfileImage(BinaryContent profileImage) {
     this.profileImage = profileImage;
   }
 }
