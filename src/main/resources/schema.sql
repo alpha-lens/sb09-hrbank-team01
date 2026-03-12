@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS employees (
     FOREIGN KEY (profile_image_id)
     REFERENCES binary_contents (id)
     ON DELETE SET NULL
-);
+    );
 
 CREATE INDEX IF NOT EXISTS idx_employee_department ON employees (department_id);
 CREATE INDEX IF NOT EXISTS idx_employee_status     ON employees (status);
@@ -60,12 +60,12 @@ CREATE TABLE IF NOT EXISTS employee_histories (
     created_at       TIMESTAMP    NOT NULL DEFAULT now(),
 
     CONSTRAINT chk_history_type CHECK (type IN ('CREATED', 'UPDATED', 'DELETED'))
-);
+    );
 
-CREATE INDEX idx_history_employee_number ON employee_histories (employee_number);
-CREATE INDEX idx_history_type            ON employee_histories (type);
-CREATE INDEX idx_history_created_at      ON employee_histories (created_at);
-CREATE INDEX idx_history_ip_address      ON employee_histories (ip_address);
+CREATE INDEX IF NOT EXISTS idx_history_employee_number ON employee_histories (employee_number);
+CREATE INDEX IF NOT EXISTS idx_history_type            ON employee_histories (type);
+CREATE INDEX IF NOT EXISTS idx_history_created_at      ON employee_histories (created_at);
+CREATE INDEX IF NOT EXISTS idx_history_ip_address      ON employee_histories (ip_address);
 
 -- 5. backup (데이터 백업 이력)
 CREATE TABLE IF NOT EXISTS backups (
@@ -81,7 +81,7 @@ CREATE TABLE IF NOT EXISTS backups (
     FOREIGN KEY (file_id)
     REFERENCES binary_contents (id)
     ON DELETE SET NULL
-);
+    );
 
-CREATE INDEX idx_backup_status     ON backups (status);
-CREATE INDEX idx_backup_started_at ON backups (started_at);
+CREATE INDEX IF NOT EXISTS idx_backup_status     ON backups (status);
+CREATE INDEX IF NOT EXISTS idx_backup_started_at ON backups (started_at);
