@@ -40,10 +40,10 @@ public class Employee extends BaseUpdatableEntity {
   private LocalDate hireDate;
   @Enumerated(EnumType.STRING)
   @Column(name = "status", nullable = false)
-  private Status status;
+  private EmployeeStatus status;
   @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
   @JoinColumn(name = "profile_image_id")
-  private ProfileImage profileImage;
+  private BinaryContent profileImage;
 
   public static Employee of(String employeeNumber, String name, String email, Department department, String position) {
     return Employee.builder()
@@ -53,11 +53,11 @@ public class Employee extends BaseUpdatableEntity {
         .department(department)
         .position(position)
         .hireDate(LocalDate.now())
-        .status(Status.ACTIVE)
+        .status(EmployeeStatus.ACTIVE)
         .build();
   }
 
-  public void update(String name, String email, Department department, String position, LocalDate hireDate, Status status) {
+  public void update(String name, String email, Department department, String position, LocalDate hireDate, EmployeeStatus status) {
     this.name = name;
     this.email = email;
     this.department = department;
@@ -66,7 +66,7 @@ public class Employee extends BaseUpdatableEntity {
     this.status = status;
   }
 
-  public void updateProfileImage(ProfileImage profileImage) {
+  public void updateProfileImage(BinaryContent profileImage) {
     this.profileImage = profileImage;
   }
 }
