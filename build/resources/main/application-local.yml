@@ -11,10 +11,10 @@ spring:
     properties:
       hibernate:
         format_sql: true
-    h2:
-      console:
-        enabled: true
     open-in-view: true
+  h2:
+    console:
+      enabled: true
   servlet:
     multipart:
       enabled: true
