@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Department extends BaseUpdatableEntity {
 
-  @Column(length = 100, nullable = false,  unique = true)
+  @Column(length = 100, nullable = false, unique = true)
   private String name;
 
   @Column(length = 500)
@@ -30,26 +30,13 @@ public class Department extends BaseUpdatableEntity {
     this.establishedDate = establishedDate;
   }
 
-  public static Department create(String name, String description, LocalDate establishedDate) {
+  public static Department of(String name, String description, LocalDate establishedDate) {
     return new Department(name, description, establishedDate);
   }
 
-  public boolean update(String newName, String newDescription, LocalDate newEstablishedDate) {
-    boolean isUpdated = false;
-
-    if (newName != null && !newName.equals(this.name)) {
-      this.name = newName;
-      isUpdated = true;
-    }
-    if (newDescription != null && !newDescription.equals(this.description)) {
-      this.description = newDescription;
-      isUpdated = true;
-    }
-    if (newEstablishedDate != null && !newEstablishedDate.equals(this.establishedDate)) {
-      this.establishedDate = newEstablishedDate;
-      isUpdated = true;
-    }
-
-    return isUpdated;
+  public void update(String newName, String newDescription, LocalDate newEstablishedDate) {
+    this.name = newName;
+    this.description = newDescription;
+    this.establishedDate = newEstablishedDate;
   }
 }
