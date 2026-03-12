@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS departments (
     created_at        TIMESTAMP    NOT NULL DEFAULT now(),
 
     CONSTRAINT uk_department_name UNIQUE (name)
-    );
+);
 
 CREATE TABLE IF NOT EXISTS binary_contents (
     id            BIGSERIAL    PRIMARY KEY,
@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS binary_contents (
     size          BIGINT       NOT NULL,
     file_path     VARCHAR(500) NOT NULL,
     created_at    TIMESTAMP    NOT NULL DEFAULT now()
-    );
+);
 
 CREATE TABLE IF NOT EXISTS employees (
     id                BIGSERIAL    PRIMARY KEY,
