@@ -160,3 +160,8 @@ CLAUDE.md
 
 # File storage
 file-data-map/
+
+# Generated docs
+code-review-report.md
+file-management-guide.md
+file-management-implementation.md
