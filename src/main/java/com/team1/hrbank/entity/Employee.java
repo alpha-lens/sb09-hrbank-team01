@@ -11,7 +11,9 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -45,6 +47,50 @@ public class Employee extends BaseUpdatableEntity {
   private ProfileImage profileImageId;
 
   public Employee(String employeeNumber, String name, String email, Department departmentId, String position, LocalDate hireDate, Status status, ProfileImage profileImageId) {
-    
+    this.employeeNumber = employeeNumber;
+    this.name = name;
+    this.email = email;
+    this.departmentId = departmentId;
+    this.position = position;
+    this.hireDate = hireDate;
+    this.status = status;
+    this.profileImageId = profileImageId;
+  }
+
+  public boolean update(String name, String email, Department departmentId, String position, LocalDate hireDate, Status status) {
+    boolean changed = false;
+    if(!this.name.equals(name)) {
+      this.name = name;
+      changed = true;
+    }
+
+    if(!this.email.equals(email)) {
+      this.email = email;
+      changed = true;
+    }
+
+    if(this.departmentId != departmentId) {
+      this.departmentId = departmentId;
+      changed = true;
+    }
+
+    if(!this.position.equals(position)) {
+      this.position = position;
+      changed = true;
+    }
+
+    if(!this.hireDate.equals(hireDate)) {
+      this.hireDate = hireDate;
+      changed = true;
+    }
+
+    if(this.status != status) {
+      this.status = status;
+      changed = true;
+    }
+
+    if(changed) {
+      this.updatedAt = Instant.now();
+    }
   }
 }
