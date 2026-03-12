@@ -19,7 +19,6 @@ public class BackupSpecification {
         .and(cursorCondition(req.getLastId(), req.getSortField()));
   }
 
-  // worker 부분 일치
   private static Specification<Backup> workerContains(String worker) {
     return (root, query, cb) -> {
       if (!StringUtils.hasText(worker)) return null;
