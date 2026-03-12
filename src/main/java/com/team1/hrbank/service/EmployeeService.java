@@ -1,17 +1,19 @@
 package com.team1.hrbank.service;
 
-import com.team1.hrbank.entity.Employee;
+import com.team1.hrbank.dto.request.EmployeeCreateRequest;
+import com.team1.hrbank.dto.request.EmployeeUpdateRequest;
 import java.util.List;
 
 public interface EmployeeService {
-  public void createEmployee(EmployeeCreateRequest request);
 
-  public void updateEmployee(EmployeeUpdateRequest request);
+  EmployeeDto createEmployee(EmployeeCreateRequest request);
 
-  public Employee findEmployee(Long id);
+  EmployeeDto updateEmployee(EmployeeUpdateRequest request);
 
-  public List<Employee> findAllEmployees();
+  EmployeeDto findEmployee(Long id);
 
-  public void deleteEmployee(Long id);
+  List<EmployeeDto> findAllEmployees();
+
+  void deleteEmployee(Long id);
 
 }

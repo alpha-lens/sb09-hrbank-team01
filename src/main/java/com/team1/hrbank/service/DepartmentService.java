@@ -1,18 +1,20 @@
 package com.team1.hrbank.service;
 
-import com.team1.hrbank.entity.Department;
-import java.time.LocalDate;
+import com.team1.hrbank.dto.DepartmentDto;
+import com.team1.hrbank.dto.request.DepartmentCreateRequest;
+import com.team1.hrbank.dto.request.DepartmentUpdateRequest;
 import java.util.List;
 
 public interface DepartmentService {
-  public void createDepartment(DepartmentCreateRequest request);
 
-  public void updateDepartment(DepartmentUpdateRequest request);
+  DepartmentDto createDepartment(DepartmentCreateRequest request);
 
-  public Department findDepartment(Long id);
+  DepartmentDto updateDepartment(DepartmentUpdateRequest request);
 
-  public List<Department> findAllDepartments();
+  DepartmentDto findDepartment(Long id);
 
-  public void deleteDepartment(Long id);
+  List<DepartmentDto> findAllDepartments();
+
+  void deleteDepartment(Long id);
 
 }
