@@ -1,9 +1,10 @@
-package com.team1.hrbank.service;
+package com.team1.hrbank.service.impl;
 
 import com.team1.hrbank.dto.BinaryContentDto;
 import com.team1.hrbank.entity.BinaryContent;
 import com.team1.hrbank.global.ResourceNotFoundException;
 import com.team1.hrbank.repository.BinaryContentRepository;
+import com.team1.hrbank.service.BinaryContentService;
 import com.team1.hrbank.storage.FileStorageService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
