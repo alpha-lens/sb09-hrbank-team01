@@ -18,4 +18,3 @@ public abstract class BaseUpdatableEntity extends BaseEntity {
   @JsonIgnore
   @LastModifiedDate
   protected Instant updatedAt;
-}
