@@ -6,6 +6,9 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -14,13 +17,18 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+
 @Entity
-@Table(name = "backup")
+@Table(name = "backups")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Backup extends BaseEntity {  // ① id, createdAt 상속
+public class Backup {  // ① id, createdAt 상속
 
-  @Column(nullable = false, length = 50)
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
+
+  @Column(nullable = false, length = 45)
   private String worker;
 
   @Column(nullable = false)
@@ -46,10 +54,7 @@ public class Backup extends BaseEntity {  // ① id, createdAt 상속
     return backup;
   }
 
-  public static Backup skipped(String worker) {
-    Backup backup   = new Backup();
-    backup.worker    = worker;
-    backup.startedAt = Instant.now();
+  public static Backup skipped(Backup backup) {
     backup.endedAt   = Instant.now();
     backup.status    = BackupStatus.SKIPPED;
     return backup;
