@@ -13,19 +13,19 @@ import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.JdbcType;
-import org.hibernate.dialect.type.H2DurationIntervalSecondJdbcType;
 
 @Entity
 @Table(name = "employees")
 @Getter
+@Builder(builderMethodName = "builder")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class Employee extends BaseUpdatableEntity {
-  @JdbcType(H2DurationIntervalSecondJdbcType.class)
   @Column(length = 20, nullable = false)
   private String employeeNumber;
   @Column(length = 50, nullable = false)
@@ -34,7 +34,7 @@ public class Employee extends BaseUpdatableEntity {
   private String email;
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "department_id", nullable = false)
-  private Department departmentId;
+  private Department department;
   @Column(length = 50, name = "position", nullable = false)
   private String position;
   @Column(name = "hire_date", nullable = false)
@@ -46,51 +46,24 @@ public class Employee extends BaseUpdatableEntity {
   @JoinColumn(name = "profile_image_id")
   private ProfileImage profileImageId;
 
-  public Employee(String employeeNumber, String name, String email, Department departmentId, String position, LocalDate hireDate, Status status, ProfileImage profileImageId) {
-    this.employeeNumber = employeeNumber;
+  public static Employee of(String employeeNumber, String name, String email, Department department, String position) {
+    return Employee.builder()
+        .employeeNumber(employeeNumber)
+        .name(name)
+        .email(email)
+        .department(department)
+        .position(position)
+        .hireDate(LocalDate.now())
+        .status(Status.ACTIVE)
+        .build();
+  }
+
+  public void update(String name, String email, Department department, String position, LocalDate hireDate, Status status) {
     this.name = name;
     this.email = email;
-    this.departmentId = departmentId;
+    this.department = department;
     this.position = position;
     this.hireDate = hireDate;
     this.status = status;
-    this.profileImageId = profileImageId;
-  }
-
-  public boolean update(String name, String email, Department departmentId, String position, LocalDate hireDate, Status status) {
-    boolean changed = false;
-    if(!this.name.equals(name)) {
-      this.name = name;
-      changed = true;
-    }
-
-    if(!this.email.equals(email)) {
-      this.email = email;
-      changed = true;
-    }
-
-    if(this.departmentId != departmentId) {
-      this.departmentId = departmentId;
-      changed = true;
-    }
-
-    if(!this.position.equals(position)) {
-      this.position = position;
-      changed = true;
-    }
-
-    if(!this.hireDate.equals(hireDate)) {
-      this.hireDate = hireDate;
-      changed = true;
-    }
-
-    if(this.status != status) {
-      this.status = status;
-      changed = true;
-    }
-
-    if(changed) {
-      this.updatedAt = Instant.now();
-    }
   }
 }
