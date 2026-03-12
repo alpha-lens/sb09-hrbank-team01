@@ -23,9 +23,9 @@ public interface EmployeeService {
 
   void deleteEmployee(Long id);
 
-  EmployeeTrendDto findEmployeeTrend(LocalDate startDate, LocalDate endDate, EmployeeTrendTimeUnit unit);
+  List<EmployeeTrendDto> findEmployeeTrend(LocalDate startDate, LocalDate endDate, EmployeeTrendTimeUnit unit);
 
-  EmployeeDistributionDto findEmployeeDistribution(LocalDate startDate, LocalDate endDate, EmployeeDistribution distribution, EmployeeStatus status);
+  List<EmployeeDistributionDto> findEmployeeDistribution(LocalDate startDate, LocalDate endDate, EmployeeDistribution distribution, EmployeeStatus status);
 
   long findEmployeeCount(EmployeeStatus status, LocalDate startDate, LocalDate endDate);
 }
