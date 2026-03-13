@@ -1,12 +1,15 @@
 package com.team1.hrbank.dto.request;
 
+import com.team1.hrbank.entity.EmployeeStatus;
+import java.time.LocalDate;
+
 public record EmployeeUpdateRequest(
     String name,
     String email,
-    Integer departmentId,
+    long departmentId,
     String position,
-    String hireDate,
-    String status,
+    LocalDate hireDate,
+    EmployeeStatus status,
     String memo
 ) {
 

@@ -1,5 +1,8 @@
 package com.team1.hrbank.dto;
 
+import com.team1.hrbank.entity.EmployeeStatus;
+import java.time.LocalDate;
+
 public record EmployeeDto(
     long id,
     String name,
@@ -8,8 +11,8 @@ public record EmployeeDto(
     long departmentId,
     String departmentName,
     String position,
-    String hireDate,
-    String status,
+    LocalDate hireDate,
+    EmployeeStatus status,
     long profileImageId
 ) {
 
