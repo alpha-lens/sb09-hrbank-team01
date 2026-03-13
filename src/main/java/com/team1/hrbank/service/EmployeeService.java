@@ -10,10 +10,11 @@ import com.team1.hrbank.entity.EmployeeStatus;
 import com.team1.hrbank.entity.EmployeeTrendTimeUnit;
 import java.time.LocalDate;
 import java.util.List;
+import org.springframework.web.multipart.MultipartFile;
 
 public interface EmployeeService {
 
-  EmployeeDto createEmployee(EmployeeCreateRequest request);
+  EmployeeDto createEmployee(EmployeeCreateRequest request, MultipartFile profileImage);
 
   EmployeeDto updateEmployee(Long id, EmployeeUpdateRequest request);
 
