@@ -52,8 +52,6 @@ public class BackupServiceImpl implements BackupService {
   private int chunkSize;
 
   /* ── 백업 실행 ───────────────────────────────────────── */
-  // 트랜잭션을 걸지 않는 이유
-  // STEP.2 save() 후 즉시 커밋되어야 STEP.3 진행 중에도 API 조회가 가능하기 때문
   @Override
   @Transactional
   public BackupDto runBackup(String worker) {
