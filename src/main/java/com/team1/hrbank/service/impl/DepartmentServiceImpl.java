@@ -46,7 +46,7 @@ public class DepartmentServiceImpl implements DepartmentService {
     if (request.newName() != null
         && !request.newName().equals(department.getName())) {
       if (departmentRepository.existsByName(request.newName())) {
-        throw new IllegalArgumentException("이미 존재하는 부서 이름이에요");
+        throw new IllegalArgumentException("이미 존재하는 부서 이름입니다.");
       }
     }
 
