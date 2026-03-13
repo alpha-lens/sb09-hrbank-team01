@@ -3,6 +3,7 @@ package com.team1.hrbank.controller;
 import com.team1.hrbank.dto.EmployeeDto;
 import com.team1.hrbank.dto.dashboard.EmployeeDistributionDto;
 import com.team1.hrbank.dto.dashboard.EmployeeTrendDto;
+import com.team1.hrbank.dto.request.EmployeeCountRequestDto;
 import com.team1.hrbank.dto.request.EmployeeCreateRequest;
 import com.team1.hrbank.dto.request.EmployeeDistributionRequestDto;
 import com.team1.hrbank.dto.request.EmployeeTrendRequestDto;
@@ -68,7 +69,10 @@ public class EmployeeController {
   }
 
   @GetMapping("/count")
-  public Long countEmployees() {
-    return null;
+  public long countEmployees(
+      @RequestBody EmployeeCountRequestDto request
+  ) {
+    return employeeService.findEmployeeCount(request.status(), request.startDate(),
+        request.endDate());
   }
 }
