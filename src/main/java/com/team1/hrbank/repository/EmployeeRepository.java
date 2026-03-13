@@ -72,4 +72,6 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long> {
   long countByDepartmentId(Long departmentId);
 
   boolean existsByDepartmentId(Long departmentId);
+
+  boolean existsByEmail(String email);
 }
