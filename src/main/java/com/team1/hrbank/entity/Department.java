@@ -18,7 +18,7 @@ public class Department extends BaseUpdatableEntity {
   @Column(length = 100, nullable = false, unique = true)
   private String name;
 
-  @Column(length = 500)
+  @Column(length = 500, nullable = false)
   private String description;
 
   @Column(nullable = false)
@@ -35,8 +35,8 @@ public class Department extends BaseUpdatableEntity {
   }
 
   public void update(String newName, String newDescription, LocalDate newEstablishedDate) {
-    this.name = newName;
-    this.description = newDescription;
-    this.establishedDate = newEstablishedDate;
+    if (newName != null) this.name = newName;
+    if (newDescription != null) this.description = newDescription;
+    if (newEstablishedDate != null) this.establishedDate = newEstablishedDate;
   }
 }
