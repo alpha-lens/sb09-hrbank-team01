@@ -6,7 +6,7 @@ import java.time.LocalDate;
 public record EmployeeCreateRequest(
     String name,
     String email,
-    long departmentId,
+    Long departmentId,
     String position,
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     LocalDate hireDate,
