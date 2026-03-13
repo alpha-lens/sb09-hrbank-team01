@@ -38,6 +38,7 @@ import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class BackupServiceImpl implements BackupService {
 
@@ -53,7 +54,6 @@ public class BackupServiceImpl implements BackupService {
 
   /* ── 백업 실행 ───────────────────────────────────────── */
   @Override
-  @Transactional
   public BackupDto runBackup(String worker) {
 
     // STEP.1 백업 필요 여부 판단
