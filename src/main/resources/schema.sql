@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS departments (
     description       VARCHAR(500),
     established_date  DATE         NOT NULL,
     created_at        TIMESTAMP    NOT NULL DEFAULT now(),
+    updated_at        TIMESTAMP    NOT NULL DEFAULT now(),
 
     CONSTRAINT uk_department_name UNIQUE (name)
 );
