@@ -9,7 +9,7 @@ public interface DepartmentService {
 
   DepartmentDto createDepartment(DepartmentCreateRequest request);
 
-  DepartmentDto updateDepartment(DepartmentUpdateRequest request);
+  DepartmentDto updateDepartment(Long id, DepartmentUpdateRequest request);
 
   DepartmentDto findDepartment(Long id);
 
