@@ -1,6 +1,7 @@
 package com.team1.hrbank.entity;
 
 import com.team1.hrbank.entity.base.BaseUpdatableEntity;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
