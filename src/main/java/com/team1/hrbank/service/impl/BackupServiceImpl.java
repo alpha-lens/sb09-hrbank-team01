@@ -7,8 +7,9 @@ import com.team1.hrbank.entity.Backup;
 import com.team1.hrbank.entity.BackupStatus;
 import com.team1.hrbank.entity.BinaryContent;
 import com.team1.hrbank.entity.Employee;
+import com.team1.hrbank.mapper.BackupMapper;
 import com.team1.hrbank.repository.BackupRepository;
-import com.team1.hrbank.repository.BackupSpecification;
+import com.team1.hrbank.repository.specification.BackupSpecification;
 import com.team1.hrbank.repository.BinaryContentRepository;
 import com.team1.hrbank.repository.EmployeeRepository;
 import com.team1.hrbank.service.BackupService;
@@ -45,6 +46,7 @@ public class BackupServiceImpl implements BackupService {
   private final BackupRepository backupRepository;
   private final EmployeeRepository employeeRepository;
   private final BinaryContentRepository binaryContentRepository;
+  private final BackupMapper backupMapper;
 
   @Value("${backup.dir:./backups}")
   private String backupDir;
@@ -52,34 +54,34 @@ public class BackupServiceImpl implements BackupService {
   @Value("${backup.chunk-size:1000}")
   private int chunkSize;
 
-  /* ── 백업 실행 ───────────────────────────────────────── */
+  // 백업 실행
   @Override
   public BackupDto runBackup(String worker) {
 
-    // STEP.1 백업 필요 여부 판단
+    // 백업 필요 여부 판단
     if (!isBackupNeeded()) {
       log.info("[Backup] 변경사항 없음 → SKIPPED (worker={})", worker);
       Backup backup = Backup.startNew(worker);
       Backup.skipped(backup);
-      return toDto(backupRepository.save(backup));
+      return backupMapper.toDto(backupRepository.save(backup));
     }
 
-    // STEP.2 IN_PROGRESS 저장 (즉시 커밋 → API 바로 조회 가능)
+    // IN_PROGRESS 저장 (즉시 커밋 → API 바로 조회 가능)
     Backup backup = saveInProgress(worker);
     log.info("[Backup] 시작 id={}, worker={}", backup.getId(), worker);
 
     Path tempFilePath = null;
     try {
-      // STEP.3 CSV 파일 생성
+      // CSV 파일 생성
       tempFilePath = performBackup(backup.getId());
 
       // BinaryContent 저장
       BinaryContent csvFile = saveBinaryContent(tempFilePath, "text/csv");
 
-      // STEP.4-1 성공 처리
+      // 성공 처리
       backup.complete(csvFile);
       log.info("[Backup] 완료 id={}, file={}", backup.getId(), tempFilePath);
-      return toDto(backupRepository.save(backup));
+      return backupMapper.toDto(backupRepository.save(backup));
 
     } catch (Exception e) {
       log.error("[Backup] 실패 id={}", backup.getId(), e);
@@ -90,13 +92,13 @@ public class BackupServiceImpl implements BackupService {
       // 에러 로그 저장
       BinaryContent errorLog = saveErrorLog(backup.getId(), e);
 
-      // STEP.4-2 실패 처리
+      // 실패 처리
       backup.fail(errorLog);
-      return toDto(backupRepository.save(backup));
+      return backupMapper.toDto(backupRepository.save(backup));
     }
   }
 
-  /* ── 백업 이력 목록 조회 ─────────────────────────────── */
+  // 백업 이력 목록 조회
   @Override
   @Transactional(readOnly = true)
   public CursorPageResponseBackupDto getList(
@@ -146,7 +148,7 @@ public class BackupServiceImpl implements BackupService {
     }
 
     return new CursorPageResponseBackupDto(
-        results.stream().map(this::toDto).toList(),
+        results.stream().map(backupMapper::toDto).toList(),
         nextCursor,
         nextIdAfter,
         size,
@@ -155,21 +157,18 @@ public class BackupServiceImpl implements BackupService {
     );
   }
 
-  /* ── STEP.1 백업 필요 여부 판단 ─────────────────────── */
+  // 백업 필요 여부 판단
   private boolean isBackupNeeded() {
     Optional<Backup> lastCompleted = backupRepository
         .findTopByStatusOrderByStartedAtDesc(BackupStatus.COMPLETED);
 
-    // 완료된 백업이 한 번도 없으면 → 필요
     if (lastCompleted.isEmpty()) return true;
 
     Instant lastBackupTime = lastCompleted.get().getStartedAt();
-
-    // 마지막 완료 백업 이후 직원 데이터 변경 여부
     return employeeRepository.existsByUpdatedAtAfter(lastBackupTime);
   }
 
-  /* ── STEP.2 IN_PROGRESS 저장 ────────────────────────── */
+  // IN_PROGRESS 저장
   private Backup saveInProgress(String worker) {
     if (backupRepository.existsByStatus(BackupStatus.IN_PROGRESS)) {
       throw new IllegalStateException("이미 진행 중인 백업 작업이 있습니다.");
@@ -177,7 +176,7 @@ public class BackupServiceImpl implements BackupService {
     return backupRepository.save(Backup.startNew(worker));
   }
 
-  /* ── STEP.3 CSV 파일 생성 (청크 단위로 OOM 방지) ────── */
+  // CSV 파일 생성
   private Path performBackup(Long backupId) throws IOException {
     Path dir = Paths.get(backupDir);
     Files.createDirectories(dir);
@@ -193,11 +192,9 @@ public class BackupServiceImpl implements BackupService {
     try (BufferedWriter writer = Files.newBufferedWriter(filePath,
         StandardOpenOption.CREATE, StandardOpenOption.WRITE)) {
 
-      // 헤더 작성
       writer.write("id,employeeNumber,name,email,departmentName,position,hireDate,status");
       writer.newLine();
 
-      // 청크 단위로 읽어서 작성
       int page = 0;
       Page<Employee> chunk;
 
@@ -216,7 +213,7 @@ public class BackupServiceImpl implements BackupService {
     return filePath;
   }
 
-  /* ── BinaryContent 저장 ──────────────────────────────── */
+  // BinaryContent 저장
   private BinaryContent saveBinaryContent(Path filePath, String contentType) throws IOException {
     BinaryContent content = BinaryContent.builder()
         .fileName(filePath.getFileName().toString())
@@ -227,7 +224,7 @@ public class BackupServiceImpl implements BackupService {
     return binaryContentRepository.save(content);
   }
 
-  /* ── 에러 로그 저장 ──────────────────────────────────── */
+  // 에러 로그 저장
   private BinaryContent saveErrorLog(Long backupId, Exception e) {
     try {
       Path dir = Paths.get(backupDir);
@@ -249,11 +246,11 @@ public class BackupServiceImpl implements BackupService {
 
     } catch (IOException ioEx) {
       log.error("[Backup] 에러 로그 저장 실패 backupId={}", backupId, ioEx);
-      return null; // null이 backup.fail()로 전달됨
+      return null;
     }
   }
 
-  /* ── CSV row 변환 ────────────────────────────────────── */
+  // CSV row 변환
   private String toCsvRow(Employee emp) {
     return String.join(",",
         String.valueOf(emp.getId()),
@@ -275,7 +272,7 @@ public class BackupServiceImpl implements BackupService {
     return value;
   }
 
-  /* ── 파일 삭제 ───────────────────────────────────────── */
+  // 파일 삭제
   private void deleteFile(Path filePath) {
     if (filePath != null) {
       try {
@@ -285,17 +282,5 @@ public class BackupServiceImpl implements BackupService {
         log.warn("[Backup] 임시 파일 삭제 실패: {}", filePath, e);
       }
     }
-  }
-
-  /* ── Backup → BackupDto 변환 ─────────────────────────── */
-  private BackupDto toDto(Backup backup) {
-    return new BackupDto(
-        backup.getId(),
-        backup.getWorker(),
-        backup.getStartedAt() != null ? backup.getStartedAt().toString() : null,
-        backup.getEndedAt()   != null ? backup.getEndedAt().toString()   : null,
-        backup.getStatus().name(),
-        backup.getBackupFile() != null ? backup.getBackupFile().getId()  : 0L
-    );
   }
 }
