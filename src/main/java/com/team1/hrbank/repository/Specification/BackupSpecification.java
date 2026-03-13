@@ -1,4 +1,4 @@
-package com.team1.hrbank.repository;
+package com.team1.hrbank.repository.Specification;
 
 import com.team1.hrbank.dto.request.BackupSearchRequest;
 import com.team1.hrbank.entity.Backup;

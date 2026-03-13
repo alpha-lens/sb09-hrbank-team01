@@ -7,8 +7,9 @@ import com.team1.hrbank.entity.Backup;
 import com.team1.hrbank.entity.BackupStatus;
 import com.team1.hrbank.entity.BinaryContent;
 import com.team1.hrbank.entity.Employee;
+import com.team1.hrbank.mapper.BackupMapper;
 import com.team1.hrbank.repository.BackupRepository;
-import com.team1.hrbank.repository.BackupSpecification;
+import com.team1.hrbank.repository.Specification.BackupSpecification;
 import com.team1.hrbank.repository.BinaryContentRepository;
 import com.team1.hrbank.repository.EmployeeRepository;
 import com.team1.hrbank.service.BackupService;
@@ -45,6 +46,7 @@ public class BackupServiceImpl implements BackupService {
   private final BackupRepository backupRepository;
   private final EmployeeRepository employeeRepository;
   private final BinaryContentRepository binaryContentRepository;
+  private final BackupMapper backupMapper;
 
   @Value("${backup.dir:./backups}")
   private String backupDir;
@@ -289,13 +291,6 @@ public class BackupServiceImpl implements BackupService {
 
   /* ── Backup → BackupDto 변환 ─────────────────────────── */
   private BackupDto toDto(Backup backup) {
-    return new BackupDto(
-        backup.getId(),
-        backup.getWorker(),
-        backup.getStartedAt() != null ? backup.getStartedAt().toString() : null,
-        backup.getEndedAt()   != null ? backup.getEndedAt().toString()   : null,
-        backup.getStatus().name(),
-        backup.getBackupFile() != null ? backup.getBackupFile().getId()  : 0L
-    );
+    return backupMapper.toDto(backup);
   }
 }
