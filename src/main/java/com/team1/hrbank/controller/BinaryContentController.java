@@ -3,6 +3,7 @@ package com.team1.hrbank.controller;
 import com.team1.hrbank.dto.BinaryContentDto;
 import com.team1.hrbank.entity.BinaryContent;
 import com.team1.hrbank.service.BinaryContentService;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.nio.charset.StandardCharsets;
+import java.text.Normalizer;
 
 @RestController
 @RequestMapping("/api/files")
@@ -50,12 +52,14 @@ public class BinaryContentController {
         BinaryContentDto metadata = binaryContentService.getMetadata(id);
         byte[] bytes = binaryContentService.getBytes(id);
 
+        String fileName = Normalizer.normalize(metadata.fileName(), Normalizer.Form.NFC);
+
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.parseMediaType(metadata.contentType()));
         headers.setContentLength(bytes.length);
         headers.setContentDisposition(
-                ContentDisposition.builder("attachment")
-                        .filename(metadata.fileName(), StandardCharsets.UTF_8)
+                ContentDisposition.attachment()
+                        .filename(fileName, StandardCharsets.UTF_8)
                         .build()
         );
 

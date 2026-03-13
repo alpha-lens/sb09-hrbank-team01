@@ -1,10 +1,9 @@
 package com.team1.hrbank.service;
 
+import com.team1.hrbank.dto.EmployeeHistoryDto;
 import java.util.List;
 
 public interface EmployeeHistoryService {
-
-  EmployeeHistoryDto createEmployeeHistory(EmployeeHistoryCreateRequest request);
 
   EmployeeHistoryDto findEmployeeHistory(Long id);
 
