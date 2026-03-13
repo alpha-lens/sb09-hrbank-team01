@@ -4,6 +4,7 @@ import com.team1.hrbank.dto.EmployeeDto;
 import com.team1.hrbank.dto.dashboard.EmployeeDistributionDto;
 import com.team1.hrbank.dto.dashboard.EmployeeTrendDto;
 import com.team1.hrbank.dto.request.EmployeeCreateRequest;
+import com.team1.hrbank.dto.request.EmployeeDistributionRequestDto;
 import com.team1.hrbank.dto.request.EmployeeTrendRequestDto;
 import com.team1.hrbank.dto.request.EmployeeUpdateRequest;
 import com.team1.hrbank.service.EmployeeService;
@@ -58,8 +59,12 @@ public class EmployeeController {
   }
 
   @GetMapping("/stats/disctribution")
-  public EmployeeDistributionDto getEmployeeDistribution() {
-    return null;
+  public List<EmployeeDistributionDto> getEmployeeDistribution(
+      @RequestBody EmployeeDistributionRequestDto request
+  ) {
+    return employeeService.findEmployeeDistribution(
+        request.startDate(), request.endDate(), request.distribution(), request.status()
+    );
   }
 
   @GetMapping("/count")
