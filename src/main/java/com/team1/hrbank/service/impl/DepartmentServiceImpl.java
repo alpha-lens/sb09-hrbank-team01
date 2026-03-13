@@ -74,7 +74,7 @@ public class DepartmentServiceImpl implements DepartmentService {
     if (keyword == null || keyword.trim().isEmpty()) {
       departments = departmentRepository.findAll();
     }  else {
-      departments = departmentRepository.findByNameContainingIgnoreCaseOrDescriptionContainingIgnoreCase(keyword, keyword);
+      departments = departmentRepository.searchByKeyword(keyword);
     }
 
     return departments.stream()
