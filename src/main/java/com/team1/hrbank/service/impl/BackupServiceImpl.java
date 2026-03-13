@@ -38,6 +38,7 @@ import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class BackupServiceImpl implements BackupService {
 
@@ -107,7 +108,8 @@ public class BackupServiceImpl implements BackupService {
       Long lastId,
       int size) {
 
-    BackupSearchRequest req = new BackupSearchRequest();
+    BackupSearchRequest req = new BackupSearchRequest(
+        worker, startedAtFrom, startedAtTo, status, sortField, lastId, size);
 
     // 정렬 조건 결정
     Sort sort = "endedAt".equalsIgnoreCase(sortField)
@@ -116,7 +118,8 @@ public class BackupServiceImpl implements BackupService {
 
     // 동적 조건 + 정렬 적용
     Specification<Backup> spec = BackupSpecification.findByCondition(req);
-    List<Backup> results = backupRepository.findAll(spec, sort);
+    Pageable pageable = PageRequest.of(0, size + 1, sort);
+    List<Backup> results = backupRepository.findAll(spec, pageable).getContent();
 
     // size + 1 조회로 hasNext 판별
     boolean hasNext = results.size() > size;
@@ -125,7 +128,8 @@ public class BackupServiceImpl implements BackupService {
     }
 
     // totalElements (커서 조건 제외)
-    BackupSearchRequest countReq = new BackupSearchRequest();
+    BackupSearchRequest countReq = new BackupSearchRequest(
+        worker, startedAtFrom, startedAtTo, status, sortField, null, size);
     long totalElements = backupRepository.count(
         BackupSpecification.findByCondition(countReq));
 
@@ -245,7 +249,7 @@ public class BackupServiceImpl implements BackupService {
 
     } catch (IOException ioEx) {
       log.error("[Backup] 에러 로그 저장 실패 backupId={}", backupId, ioEx);
-      return null;
+      return null; // null이 backup.fail()로 전달됨
     }
   }
 
