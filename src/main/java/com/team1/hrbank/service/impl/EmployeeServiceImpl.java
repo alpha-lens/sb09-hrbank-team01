@@ -5,11 +5,13 @@ import com.team1.hrbank.dto.dashboard.EmployeeDistributionDto;
 import com.team1.hrbank.dto.dashboard.EmployeeTrendDto;
 import com.team1.hrbank.dto.request.EmployeeCreateRequest;
 import com.team1.hrbank.dto.request.EmployeeUpdateRequest;
+import com.team1.hrbank.entity.BinaryContent;
 import com.team1.hrbank.entity.Department;
 import com.team1.hrbank.entity.Employee;
 import com.team1.hrbank.entity.EmployeeDistribution;
 import com.team1.hrbank.entity.EmployeeStatus;
 import com.team1.hrbank.entity.EmployeeTrendTimeUnit;
+import com.team1.hrbank.repository.BinaryContentRepository;
 import com.team1.hrbank.repository.DepartmentRepository;
 import com.team1.hrbank.repository.EmployeeRepository;
 import com.team1.hrbank.repository.projection.DistributionMapping;
@@ -21,10 +23,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 @Service
 @RequiredArgsConstructor
@@ -33,6 +37,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
   private final EmployeeRepository employeeRepository;
   private final DepartmentRepository departmentRepository;
+  private final BinaryContentRepository binaryContentRepository;
 
   public String generateEmployeeNumber(String prefix, int lastSequence) {
     int nextSequence = lastSequence + 1;
@@ -76,37 +81,43 @@ public class EmployeeServiceImpl implements EmployeeService {
 
   @Override
   @Transactional
-  public EmployeeDto createEmployee(EmployeeCreateRequest request) {
+  public EmployeeDto createEmployee(EmployeeCreateRequest request, MultipartFile profileImage) {
+    if (employeeRepository.existsByEmail(request.email())) {
+      throw new IllegalArgumentException("이미 사용 중인 이메일입니다: " + request.email());
+    }
+
     String prefix = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMM"));
     String lastEmployeeNumber = employeeRepository.findLastEmployeeNameByPrefix(prefix);
+    Department department = departmentRepository.findById(request.departmentId())
+        .orElseThrow(() -> new NoSuchElementException("해당 부서를 찾을 수 없습니다."));
+    String employeeNumber = lastEmployeeNumber != null ?
+        generateEmployeeNumber(prefix,Integer.parseInt(lastEmployeeNumber.substring(7)))
+        : generateEmployeeNumber(prefix, 1);
 
-    Department department = null;
-    try {
-      department = departmentRepository.findById(request.departmentId()).get();
-    } catch (Exception e) {
-      throw new NoSuchElementException("해당 부서가 존재하지 않습니다 : " + e);
+    Employee employee = Employee.of(employeeNumber, request.name(), request.email(), department,
+        request.position());
+
+    if(!profileImage.isEmpty()) {
+      String fileName = profileImage.getOriginalFilename();
+      String contentType = profileImage.getContentType();
+      Long size = profileImage.getSize();
+      String storedFileName = UUID.randomUUID() + "_" + fileName;
+      String filePath = "./file-data-map/" + storedFileName;
+
+      BinaryContent profile = binaryContentRepository.save(new BinaryContent(fileName, contentType, size, filePath));
+      employee.updateProfileImage(profile);
     }
 
-    if (lastEmployeeNumber == null) {
-      String employeeNumber = generateEmployeeNumber(prefix, 1);
-      Employee employee = employeeRepository.save(
-          Employee.of(employeeNumber, request.name(), request.email(), department,
-              request.position()));
-      return toDto(employee);
-    }
-
-    String employeeNumber = generateEmployeeNumber(prefix,
-        Integer.parseInt(lastEmployeeNumber.substring(7)));
-    Employee employee = employeeRepository.save(
-        Employee.of(employeeNumber, request.name(), request.email(), department,
-            request.position()));
-    return toDto(employee);
+    return toDto(employeeRepository.save(employee));
   }
 
   @Override
+  @Transactional
   public EmployeeDto updateEmployee(Long id, EmployeeUpdateRequest request) {
-    Employee employee = employeeRepository.findById(id).get();
-    Department department = departmentRepository.findById(request.departmentId()).get();
+    Employee employee = employeeRepository.findById(id)
+        .orElseThrow(() -> new NoSuchElementException("해당 직원을 찾을 수 없습니다 : " + id));
+    Department department = departmentRepository.findById(request.departmentId())
+        .orElseThrow(() -> new NoSuchElementException("해당 부서를 찾을 수 없습니다 : " + request.departmentId()));
 
     employee.update(
         request.name(), request.email(), department, request.position(), request.hireDate(),
@@ -118,7 +129,8 @@ public class EmployeeServiceImpl implements EmployeeService {
 
   @Override
   public EmployeeDto findEmployee(Long id) {
-    return toDto(employeeRepository.findById(id).get());
+    return toDto(employeeRepository.findById(id)
+        .orElseThrow(() -> new NoSuchElementException("해당 직원을 찾을 수 없습니다 : " + id)));
   }
 
   @Override
@@ -132,6 +144,7 @@ public class EmployeeServiceImpl implements EmployeeService {
   }
 
   @Override
+  @Transactional
   public void deleteEmployee(Long id) {
     employeeRepository.deleteById(id);
   }
