@@ -50,7 +50,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         entity.getPosition(),
         entity.getHireDate(),
         entity.getStatus(),
-        entity.getProfileImage().getId()
+        entity.getProfileImage() == null ? null : entity.getProfileImage().getId()
     );
   }
 
@@ -83,20 +83,23 @@ public class EmployeeServiceImpl implements EmployeeService {
     Department department = null;
     try {
       department = departmentRepository.findById(request.departmentId()).get();
-    } catch (Exception ignored) {
-      throw new NoSuchElementException("해당 부서가 존재하지 않습니다.");
+    } catch (Exception e) {
+      throw new NoSuchElementException("해당 부서가 존재하지 않습니다 : " + e);
     }
 
-    if(lastEmployeeNumber == null) {
+    if (lastEmployeeNumber == null) {
       String employeeNumber = generateEmployeeNumber(prefix, 1);
-      Employee employee = employeeRepository.save(Employee.of(employeeNumber, request.name(), request.email(), department,
-          request.position()));
+      Employee employee = employeeRepository.save(
+          Employee.of(employeeNumber, request.name(), request.email(), department,
+              request.position()));
       return toDto(employee);
     }
 
-    String employeeNumber = generateEmployeeNumber(prefix, Integer.parseInt(lastEmployeeNumber.substring(7)));
-    Employee employee = employeeRepository.save(Employee.of(employeeNumber, request.name(), request.email(), department,
-        request.position()));
+    String employeeNumber = generateEmployeeNumber(prefix,
+        Integer.parseInt(lastEmployeeNumber.substring(7)));
+    Employee employee = employeeRepository.save(
+        Employee.of(employeeNumber, request.name(), request.email(), department,
+            request.position()));
     return toDto(employee);
   }
 
@@ -106,7 +109,8 @@ public class EmployeeServiceImpl implements EmployeeService {
     Department department = departmentRepository.findById(request.departmentId()).get();
 
     employee.update(
-        request.name(), request.email(), department, request.position(), request.hireDate(), request.status()
+        request.name(), request.email(), department, request.position(), request.hireDate(),
+        request.status()
     );
 
     return toDto(employee);
@@ -133,11 +137,13 @@ public class EmployeeServiceImpl implements EmployeeService {
   }
 
   @Override
-  public List<EmployeeTrendDto> findEmployeeTrend(LocalDate startDate, LocalDate endDate, EmployeeTrendTimeUnit unit) {
+  public List<EmployeeTrendDto> findEmployeeTrend(LocalDate startDate, LocalDate endDate,
+      EmployeeTrendTimeUnit unit) {
     // 1. 기본값 및 기간 설정
     LocalDate finalEnd = (endDate != null) ? endDate : LocalDate.now();
     EmployeeTrendTimeUnit finalUnit = (unit != null) ? unit : EmployeeTrendTimeUnit.MONTH;
-    LocalDate finalStart = (startDate != null) ? startDate : finalEnd.minusMonths(11).withDayOfMonth(1);
+    LocalDate finalStart =
+        (startDate != null) ? startDate : finalEnd.minusMonths(11).withDayOfMonth(1);
 
     // 2. DB 데이터 조회 (인터페이스로 받음)
     List<EmployeeTrendMapping> rawResults = employeeRepository.getTrendData(
@@ -159,7 +165,8 @@ public class EmployeeServiceImpl implements EmployeeService {
 
       // 변동치 계산
       int change = currentCount - previousCount;
-      double changeRate = (previousCount == 0) ? (currentCount > 0 ? 100.0 : 0.0) : ((double) change / previousCount) * 100;
+      double changeRate = (previousCount == 0) ? (currentCount > 0 ? 100.0 : 0.0)
+          : ((double) change / previousCount) * 100;
 
       result.add(new EmployeeTrendDto(
           dateKey,
@@ -176,7 +183,8 @@ public class EmployeeServiceImpl implements EmployeeService {
   }
 
   @Override
-  public List<EmployeeDistributionDto> findEmployeeDistribution(LocalDate startDate, LocalDate endDate,
+  public List<EmployeeDistributionDto> findEmployeeDistribution(LocalDate startDate,
+      LocalDate endDate,
       EmployeeDistribution distribution, EmployeeStatus status) {
 
     List<DistributionMapping> rawData = switch (distribution) {
@@ -201,11 +209,11 @@ public class EmployeeServiceImpl implements EmployeeService {
 
   @Override
   public long findEmployeeCount(EmployeeStatus status, LocalDate startDate, LocalDate endDate) {
-    if(startDate == null) {
+    if (startDate == null) {
       startDate = LocalDate.now();
     }
 
-    if(endDate == null) {
+    if (endDate == null) {
       endDate = startDate.minusWeeks(1);
     }
     return employeeRepository.findEmployeeCount(status, startDate, endDate);
