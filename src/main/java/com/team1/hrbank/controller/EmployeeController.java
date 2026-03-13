@@ -4,8 +4,11 @@ import com.team1.hrbank.dto.EmployeeDto;
 import com.team1.hrbank.dto.dashboard.EmployeeDistributionDto;
 import com.team1.hrbank.dto.dashboard.EmployeeTrendDto;
 import com.team1.hrbank.dto.request.EmployeeCreateRequest;
+import com.team1.hrbank.dto.request.EmployeeTrendRequestDto;
 import com.team1.hrbank.dto.request.EmployeeUpdateRequest;
+import com.team1.hrbank.entity.EmployeeTrendTimeUnit;
 import com.team1.hrbank.service.EmployeeService;
+import java.time.LocalDate;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -51,8 +54,8 @@ public class EmployeeController {
   }
 
   @GetMapping("/stats/trend")
-  public EmployeeTrendDto getEmployeeTrend() {
-    return null;
+  public List<EmployeeTrendDto> getEmployeeTrend(@RequestBody EmployeeTrendRequestDto request) {
+    return employeeService.findEmployeeTrend(request.startDate(), request.endDate(), request.unit());
   }
 
   @GetMapping("/stats/disctribution")
