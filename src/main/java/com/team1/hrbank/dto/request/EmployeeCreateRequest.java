@@ -12,8 +12,4 @@ public record EmployeeCreateRequest(
     LocalDate hireDate,
     String jobTitle
 ) {
-
-//  public Employee toEntity() {
-//    return new Employee()
-//  }
 }
