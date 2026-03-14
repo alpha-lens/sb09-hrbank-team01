@@ -59,13 +59,13 @@ public class EmployeeHistoryServiceImpl implements EmployeeHistoryService {
 
   }
 
-  @Override
-  public List<EmployeeHistoryDto> findAllEmployeeHistories() {
-    return employeeHistoryRepository.findAll()
-        .stream()
-        .map(employeeHistoryMapper::toDto)
-        .collect(Collectors.toList());
-  }
+//  @Override
+//  public List<EmployeeHistoryDto> findAllEmployeeHistories() {
+//    return employeeHistoryRepository.findAll()
+//        .stream()
+//        .map(employeeHistoryMapper::toDto)
+//        .collect(Collectors.toList());
+//  }
 
   @Override
   public List<EmployeeHistoryDto> findEmployeeHistoriesByRevisionsBetween(Long fromRevision,

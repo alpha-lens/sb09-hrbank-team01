@@ -14,7 +14,7 @@ public interface EmployeeHistoryService {
 
   EmployeeHistoryDetailDto findEmployeeHistory(Long id);
 
-  List<EmployeeHistoryDto> findAllEmployeeHistories();
+//  List<EmployeeHistoryDto> findAllEmployeeHistories();
 
   List<EmployeeHistoryDto> findEmployeeHistoriesByRevisionsBetween(Long fromRevision,
       Long toRevision);
