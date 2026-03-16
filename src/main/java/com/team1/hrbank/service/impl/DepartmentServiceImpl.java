@@ -9,6 +9,7 @@ import com.team1.hrbank.repository.DepartmentRepository;
 import com.team1.hrbank.repository.EmployeeRepository;
 import com.team1.hrbank.service.DepartmentService;
 import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -77,9 +78,26 @@ public class DepartmentServiceImpl implements DepartmentService {
       departments = departmentRepository.searchByKeyword(keyword);
     }
 
+    // 검색된 부서가 없으면 빈 리스트 반환
+    if (departments.isEmpty()) {
+      return List.of();
+    }
+
+    List<Long> departmentIds = departments.stream()
+        .map(Department::getId)
+        .toList();
+
+    List<Object[]> countResults = employeeRepository.countByDepartmentIds(departmentIds);
+
+    Map<Long, Long> employeeCountMap = countResults.stream()
+        .collect(java.util.stream.Collectors.toMap(
+            row -> (Long) row[0],
+            row -> (Long) row[1]
+        ));
+
     return departments.stream()
         .map(dept -> {
-          long employeeCount = employeeRepository.countByDepartmentId(dept.getId());
+          long employeeCount = employeeCountMap.getOrDefault(dept.getId(), 0L);
           return toDto(dept, employeeCount);
         })
         .toList();

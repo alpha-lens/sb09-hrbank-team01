@@ -37,7 +37,7 @@ public class DepartmentController {
   // 1. 부서 등록
   @Operation(summary = "부서 등록", description = "새로운 부서를 등록합니다. (이름 중복 불가)")
   @ApiResponses(value = {
-      @ApiResponse(responseCode = "200", description = "등록 성공",
+      @ApiResponse(responseCode = "201", description = "등록 성공",
           content = @Content(schema = @Schema(implementation = DepartmentDto.class))),
       @ApiResponse(responseCode = "400", description = "잘못된 요청 또는 중복된 이름",
           content = @Content(schema = @Schema(implementation = com.team1.hrbank.global.GlobalExceptionHandler.ErrorResponse.class))),
@@ -105,8 +105,8 @@ public class DepartmentController {
       @Parameter(description = "정렬 필드 (name 또는 establishedDate)") @RequestParam(required = false, defaultValue = "establishedDate") String sortField,
       @Parameter(description = "정렬 방향 (asc 또는 desc, 기본값: asc)") @RequestParam(required = false, defaultValue = "asc") String sortDirection
   ) {
-    // Service 로직을 수정 후 CursorPageResponseDepartmentDto 객체를 받아와야 함.(임시로 null 반환)
-    return ResponseEntity.ok(null);
+    // TODO: 커서 기반 페이지네이션 비즈니스 로직 구현 예정
+    return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
   }
 
   // 5. 부서 삭제
@@ -126,4 +126,5 @@ public class DepartmentController {
     departmentService.deleteDepartment(id);
     return ResponseEntity.noContent().build();
   }
+
 }
