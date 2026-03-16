@@ -197,7 +197,11 @@ public class EmployeeServiceImpl implements EmployeeService {
       throw new NoSuchElementException("해당 직원을 찾을 수 없습니다: " + id);
     }
 
+    Long profileId = employeeRepository.findById(id).get().getProfileImage().getId();
+
     employeeRepository.deleteById(id);
+    if(fileStorageService.exists(id))
+      fileStorageService.delete(profileId);
   }
 
   @Override
