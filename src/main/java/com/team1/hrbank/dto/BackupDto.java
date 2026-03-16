@@ -6,7 +6,7 @@ public record BackupDto(
     String startedAt,
     String endedAt,
     String status,
-    long filedId
+    long fileId
 ) {
 
 }

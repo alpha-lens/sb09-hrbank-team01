@@ -12,11 +12,11 @@ public class BackupSpecification {
   // 전체 필터 조건 조합
   public static Specification<Backup> findByCondition(BackupSearchRequest req) {
     return Specification
-        .where(workerContains(req.getWorker()))
-        .and(startedAtFrom(req.getStartedAtFrom()))
-        .and(startedAtTo(req.getStartedAtTo()))
-        .and(statusEquals(req.getStatus()))
-        .and(cursorCondition(req.getLastId(), req.getSortField()));
+        .where(workerContains(req.worker()))
+        .and(startedAtFrom(req.startedAtFrom()))
+        .and(startedAtTo(req.startedAtTo()))
+        .and(statusEquals(req.status()))
+        .and(cursorCondition(req.lastId(), req.sortField()));
   }
 
   private static Specification<Backup> workerContains(String worker) {
