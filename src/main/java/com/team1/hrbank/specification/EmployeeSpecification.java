@@ -4,7 +4,6 @@ import com.team1.hrbank.dto.request.EmployeeSearchRequest;
 import com.team1.hrbank.entity.Employee;
 import com.team1.hrbank.entity.EmployeeStatus;
 import jakarta.persistence.criteria.JoinType;
-import java.time.LocalDate;
 import org.springframework.data.jpa.domain.Specification;
 import jakarta.persistence.criteria.Predicate;
 import java.util.ArrayList;
@@ -46,12 +45,12 @@ public class EmployeeSpecification {
       }
 
       // 5. 입사일 (범위 조건: hireDateFrom <= hireDate <= hireDateTo)
-      if (request.hireDateFrom() != null && request.hireDateTo() != null) {
-        predicates.add(cb.between(root.get("hireDate"), request.hireDateFrom(), request.hireDateTo()));
-      } else if(request.hireDateFrom() != null) {
-        predicates.add(cb.between(root.get("hireDate"), request.hireDateFrom(), LocalDate.MAX));
-      } else if(request.hireDateTo() != null) {
-        predicates.add(cb.between(root.get("hireDate"), LocalDate.MIN, request.hireDateTo()));
+      if (request.hireDateFrom() != null) {
+        predicates.add(cb.greaterThanOrEqualTo(root.get("hireDate"), request.hireDateFrom()));
+      }
+
+      if (request.hireDateTo() != null) {
+        predicates.add(cb.lessThanOrEqualTo(root.get("hireDate"), request.hireDateTo()));
       }
 
       // 6. 상태 (완전 일치)
