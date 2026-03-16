@@ -74,10 +74,10 @@ public class EmployeeHistoryServiceImpl implements EmployeeHistoryService {
   @Override
   public CursorPageResponseEmployeeHistoryDto findEmployeeHistories(EmployeeHistorySearchRequest request)
   {
-    Long cursorId = null;
+    Long cursorId = 0L;
     if (request.cursor() != null) {
-      cursorId = request.cursor(); // Long이라 그냥 대입
-    } else {
+      cursorId = request.cursor();
+    } else if (request.idAfter() != null) {
       cursorId = request.idAfter();
     }
 
