@@ -5,6 +5,7 @@ import com.team1.hrbank.dto.EmployeeHistoryDto;
 import com.team1.hrbank.dto.cursor.CursorPageResponseEmployeeHistoryDto;
 import com.team1.hrbank.dto.request.EmployeeHistoryCreateRequest;
 import com.team1.hrbank.dto.request.EmployeeHistorySearchRequest;
+import java.time.Instant;
 import java.util.List;
 
 public interface EmployeeHistoryService {
@@ -13,9 +14,8 @@ public interface EmployeeHistoryService {
 
   EmployeeHistoryDetailDto findEmployeeHistory(Long id);
 
-  List<EmployeeHistoryDto> findEmployeeHistoriesByRevisionsBetween(Long fromDate, Long toDate);
-
-
   CursorPageResponseEmployeeHistoryDto findEmployeeHistories(EmployeeHistorySearchRequest request);
+
+  long countEmployeeHistories(Instant fromDate, Instant toDate);
 
 }
