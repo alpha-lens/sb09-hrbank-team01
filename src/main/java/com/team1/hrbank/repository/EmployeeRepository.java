@@ -73,6 +73,9 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long>,
 
   long countByDepartmentId(Long departmentId);
 
+  @Query("SELECT e.department.id, COUNT(e.id) FROM Employee e WHERE e.department.id IN :departmentIds GROUP BY e.department.id")
+  List<Object[]> countByDepartmentIds(@Param("departmentIds") List<Long> departmentIds);
+
   boolean existsByDepartmentId(Long departmentId);
 
   boolean existsByEmail(String email);
