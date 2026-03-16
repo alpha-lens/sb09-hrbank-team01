@@ -4,6 +4,7 @@ import com.team1.hrbank.dto.EmployeeDto;
 import com.team1.hrbank.dto.dashboard.EmployeeDistributionDto;
 import com.team1.hrbank.dto.dashboard.EmployeeTrendDto;
 import com.team1.hrbank.dto.request.EmployeeCreateRequest;
+import com.team1.hrbank.dto.request.EmployeeSearchRequest;
 import com.team1.hrbank.dto.request.EmployeeUpdateRequest;
 import com.team1.hrbank.entity.BinaryContent;
 import com.team1.hrbank.entity.Department;
@@ -17,6 +18,7 @@ import com.team1.hrbank.repository.EmployeeRepository;
 import com.team1.hrbank.repository.projection.DistributionMapping;
 import com.team1.hrbank.repository.projection.EmployeeTrendMapping;
 import com.team1.hrbank.service.EmployeeService;
+import com.team1.hrbank.specification.EmployeeSpecification;
 import com.team1.hrbank.storage.FileStorageService;
 import java.io.IOException;
 import java.time.LocalDate;
@@ -28,6 +30,11 @@ import java.util.NoSuchElementException;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -150,15 +157,33 @@ public class EmployeeServiceImpl implements EmployeeService {
     return toDto(employeeRepository.findById(id)
         .orElseThrow(() -> new NoSuchElementException("해당 직원을 찾을 수 없습니다 : " + id)));
   }
-
   @Override
-  public List<EmployeeDto> findAllEmployees() {
-    List<Employee> employees = employeeRepository.findAll();
-    List<EmployeeDto> employeeDtos = new ArrayList<>(employees.size());
-    for (Employee employee : employees) {
-      employeeDtos.add(toDto(employee));
+  public List<EmployeeDto> findAllEmployees(EmployeeSearchRequest request) {
+    // 1. 클라이언트의 sortField를 엔티티 경로로 변환
+    String sortField = request.sortField();
+    if (sortField == null || sortField.isBlank()) {
+      sortField = "id"; // 기본값
+    } else if ("departmentName".equals(sortField)) {
+      // 부서 이름으로 정렬 요청이 오면 'department' 엔티티의 'name' 필드를 보도록 수정
+      sortField = "department.name";
     }
-    return employeeDtos;
+
+    Sort.Direction direction = "desc".equalsIgnoreCase(request.sortDirection())
+        ? Sort.Direction.DESC : Sort.Direction.ASC;
+
+    // 2. Pageable 객체 생성
+    Pageable pageable = PageRequest.of(0, request.size(), Sort.by(direction, sortField));
+
+    // 3. Specification과 Pageable을 함께 사용하여 조회
+    Page<Employee> employeePage = employeeRepository.findAll(
+        EmployeeSpecification.filterBy(request),
+        pageable
+    );
+
+    // 4. DTO로 변환하여 반환
+    return employeePage.getContent().stream()
+        .map(this::toDto)
+        .toList();
   }
 
   @Override

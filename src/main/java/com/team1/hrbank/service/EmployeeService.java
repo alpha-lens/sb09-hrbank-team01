@@ -4,6 +4,7 @@ import com.team1.hrbank.dto.EmployeeDto;
 import com.team1.hrbank.dto.dashboard.EmployeeDistributionDto;
 import com.team1.hrbank.dto.dashboard.EmployeeTrendDto;
 import com.team1.hrbank.dto.request.EmployeeCreateRequest;
+import com.team1.hrbank.dto.request.EmployeeSearchRequest;
 import com.team1.hrbank.dto.request.EmployeeUpdateRequest;
 import com.team1.hrbank.entity.EmployeeDistribution;
 import com.team1.hrbank.entity.EmployeeStatus;
@@ -23,7 +24,7 @@ public interface EmployeeService {
 
   EmployeeDto findEmployee(Long id);
 
-  List<EmployeeDto> findAllEmployees();
+  List<EmployeeDto> findAllEmployees(EmployeeSearchRequest request);
 
   void deleteEmployee(Long id);
 
