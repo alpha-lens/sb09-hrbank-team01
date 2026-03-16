@@ -1,4 +1,4 @@
-package com.team1.hrbank.repository;
+package com.team1.hrbank.repository.specification;
 
 import com.team1.hrbank.dto.request.BackupSearchRequest;
 import com.team1.hrbank.entity.Backup;
@@ -16,9 +16,10 @@ public class BackupSpecification {
         .and(startedAtFrom(req.startedAtFrom()))
         .and(startedAtTo(req.startedAtTo()))
         .and(statusEquals(req.status()))
-        .and(cursorCondition(req.lastId(), req.sortField()));
+        .and(cursorCondition(req.lastId()));
   }
 
+  // worker 부분 일치
   private static Specification<Backup> workerContains(String worker) {
     return (root, query, cb) -> {
       if (!StringUtils.hasText(worker)) return null;
@@ -51,13 +52,10 @@ public class BackupSpecification {
     };
   }
 
-  // 커서 조건 (Keyset 페이지네이션)
-  private static Specification<Backup> cursorCondition(Long lastId, String sortField) {
+  // 커서 조건 (id 기준)
+  private static Specification<Backup> cursorCondition(Long lastId) {
     return (root, query, cb) -> {
       if (lastId == null) return null;
-
-      // lastId 기준으로 커서 백업 조회는 서비스에서 처리하므로
-      // 여기선 id 기준으로만 처리
       return cb.lessThan(root.get("id"), lastId);
     };
   }
