@@ -8,15 +8,18 @@ import com.team1.hrbank.dto.request.EmployeeUpdateRequest;
 import com.team1.hrbank.entity.EmployeeDistribution;
 import com.team1.hrbank.entity.EmployeeStatus;
 import com.team1.hrbank.entity.EmployeeTrendTimeUnit;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
 import org.springframework.web.multipart.MultipartFile;
 
 public interface EmployeeService {
 
-  EmployeeDto createEmployee(EmployeeCreateRequest request, MultipartFile profileImage);
+  EmployeeDto createEmployee(EmployeeCreateRequest request, MultipartFile profileImage)
+      throws IOException;
 
-  EmployeeDto updateEmployee(Long id, EmployeeUpdateRequest request);
+  EmployeeDto updateEmployee(Long id, EmployeeUpdateRequest request, MultipartFile profileImage)
+      throws IOException;
 
   EmployeeDto findEmployee(Long id);
 

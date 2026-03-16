@@ -17,6 +17,8 @@ import com.team1.hrbank.repository.EmployeeRepository;
 import com.team1.hrbank.repository.projection.DistributionMapping;
 import com.team1.hrbank.repository.projection.EmployeeTrendMapping;
 import com.team1.hrbank.service.EmployeeService;
+import com.team1.hrbank.storage.FileStorageService;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -37,6 +39,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
   private final EmployeeRepository employeeRepository;
   private final DepartmentRepository departmentRepository;
+  private final FileStorageService fileStorageService;
   private final BinaryContentRepository binaryContentRepository;
 
   public String generateEmployeeNumber(String prefix, int lastSequence) {
@@ -79,9 +82,20 @@ public class EmployeeServiceImpl implements EmployeeService {
     };
   }
 
+  private BinaryContent saveProfileImage(MultipartFile profileImage) {
+    String fileName = profileImage.getOriginalFilename();
+    String contentType = profileImage.getContentType();
+    Long size = profileImage.getSize();
+    String storedFileName = UUID.randomUUID() + "_" + fileName;
+    String filePath = "./file-data-map/" + storedFileName;
+
+    return new BinaryContent(fileName, contentType, size, filePath);
+  }
+
   @Override
   @Transactional
-  public EmployeeDto createEmployee(EmployeeCreateRequest request, MultipartFile profileImage) {
+  public EmployeeDto createEmployee(EmployeeCreateRequest request, MultipartFile profileImage)
+      throws IOException {
     if (employeeRepository.existsByEmail(request.email())) {
       throw new IllegalArgumentException("이미 사용 중인 이메일입니다: " + request.email());
     }
@@ -97,14 +111,10 @@ public class EmployeeServiceImpl implements EmployeeService {
     Employee employee = Employee.of(employeeNumber, request.name(), request.email(), department,
         request.position());
 
-    if(!profileImage.isEmpty()) {
-      String fileName = profileImage.getOriginalFilename();
-      String contentType = profileImage.getContentType();
-      Long size = profileImage.getSize();
-      String storedFileName = UUID.randomUUID() + "_" + fileName;
-      String filePath = "./file-data-map/" + storedFileName;
-
-      BinaryContent profile = binaryContentRepository.save(new BinaryContent(fileName, contentType, size, filePath));
+    if(profileImage != null && !profileImage.isEmpty()) {
+      BinaryContent profile = saveProfileImage(profileImage);
+      binaryContentRepository.save(profile);
+      fileStorageService.save(profile.getId(), profileImage.getBytes());
       employee.updateProfileImage(profile);
     }
 
@@ -113,7 +123,8 @@ public class EmployeeServiceImpl implements EmployeeService {
 
   @Override
   @Transactional
-  public EmployeeDto updateEmployee(Long id, EmployeeUpdateRequest request) {
+  public EmployeeDto updateEmployee(Long id, EmployeeUpdateRequest request, MultipartFile profileImage)
+      throws IOException {
     Employee employee = employeeRepository.findById(id)
         .orElseThrow(() -> new NoSuchElementException("해당 직원을 찾을 수 없습니다 : " + id));
     Department department = departmentRepository.findById(request.departmentId())
@@ -123,6 +134,13 @@ public class EmployeeServiceImpl implements EmployeeService {
         request.name(), request.email(), department, request.position(), request.hireDate(),
         request.status()
     );
+
+    if(profileImage != null && !profileImage.isEmpty()) {
+      BinaryContent profile = saveProfileImage(profileImage);
+      binaryContentRepository.save(profile);
+      fileStorageService.save(profile.getId(), profileImage.getBytes());
+      employee.updateProfileImage(profile);
+    }
 
     return toDto(employee);
   }
@@ -146,6 +164,10 @@ public class EmployeeServiceImpl implements EmployeeService {
   @Override
   @Transactional
   public void deleteEmployee(Long id) {
+    if (!employeeRepository.existsById(id)) {
+      throw new NoSuchElementException("해당 직원을 찾을 수 없습니다: " + id);
+    }
+
     employeeRepository.deleteById(id);
   }
 
@@ -222,12 +244,12 @@ public class EmployeeServiceImpl implements EmployeeService {
 
   @Override
   public long findEmployeeCount(EmployeeStatus status, LocalDate startDate, LocalDate endDate) {
-    if (startDate == null) {
-      startDate = LocalDate.now();
+    if (endDate == null) {
+      endDate = LocalDate.now();
     }
 
-    if (endDate == null) {
-      endDate = startDate.minusWeeks(1);
+    if (startDate == null) {
+      startDate = endDate.minusWeeks(1);
     }
     return employeeRepository.findEmployeeCount(status, startDate, endDate);
   }
