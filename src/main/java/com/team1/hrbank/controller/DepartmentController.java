@@ -12,9 +12,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -105,8 +103,9 @@ public class DepartmentController {
       @Parameter(description = "정렬 필드 (name 또는 establishedDate)") @RequestParam(required = false, defaultValue = "establishedDate") String sortField,
       @Parameter(description = "정렬 방향 (asc 또는 desc, 기본값: asc)") @RequestParam(required = false, defaultValue = "asc") String sortDirection
   ) {
-    // TODO: 커서 기반 페이지네이션 비즈니스 로직 구현 예정
-    return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+    CursorPageResponseDepartmentDto response = departmentService.findAllDepartments(
+        nameOrDescription, idAfter, cursor, size, sortField, sortDirection);
+    return ResponseEntity.ok(response);
   }
 
   // 5. 부서 삭제
