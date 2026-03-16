@@ -6,7 +6,7 @@ import java.time.LocalDate;
 public record EmployeeUpdateRequest(
     String name,
     String email,
-    long departmentId,
+    Long departmentId,
     String position,
     LocalDate hireDate,
     EmployeeStatus status,
