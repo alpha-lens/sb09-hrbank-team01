@@ -16,8 +16,7 @@ public interface EmployeeHistoryService {
 
   List<EmployeeHistoryDto> findAllEmployeeHistories();
 
-  List<EmployeeHistoryDto> findEmployeeHistoriesByRevisionsBetween(Long fromRevision,
-      Long toRevision);
+  long countByDateRange(Instant fromDate, Instant toDate);
 
   CursorPageResponseEmployeeHistoryDto findEmployeeHistories(
       String employeeNumber,

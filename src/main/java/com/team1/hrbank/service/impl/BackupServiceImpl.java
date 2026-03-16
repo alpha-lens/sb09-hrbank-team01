@@ -56,6 +56,7 @@ public class BackupServiceImpl implements BackupService {
 
   // 백업 실행
   @Override
+  @Transactional
   public BackupDto runBackup(String worker) {
 
     // 백업 필요 여부 판단
@@ -200,7 +201,7 @@ public class BackupServiceImpl implements BackupService {
 
       do {
         Pageable pageable = PageRequest.of(page++, chunkSize, Sort.by("id"));
-        chunk = employeeRepository.findAll(pageable);
+        chunk = employeeRepository.findAllWithDepartment(pageable);
 
         for (Employee emp : chunk.getContent()) {
           writer.write(toCsvRow(emp));

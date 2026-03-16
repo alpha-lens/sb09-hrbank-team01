@@ -14,8 +14,11 @@ public class EmployeeSpecification {
 
   public static Specification<Employee> filterBy(EmployeeSearchRequest request) {
     return (root, query, cb) -> {
+      jakarta.persistence.criteria.Join<?, ?> departmentJoin = null;
+
       if (query.getResultType() != Long.class) {
-        root.fetch("department", JoinType.LEFT);
+        var fetch = root.fetch("department", JoinType.LEFT);
+        departmentJoin = (jakarta.persistence.criteria.Join<?, ?>) fetch;
       }
 
       List<Predicate> predicates = new ArrayList<>();
@@ -29,9 +32,10 @@ public class EmployeeSpecification {
         ));
       }
 
-      // 2. 부서 이름 (부분 일치: LIKE %keyword%) - Join 필요
+      // 2. 부서 이름 (부분 일치: LIKE %keyword%) - fetch한 join 재사용
       if (StringUtils.hasText(request.departmentName())) {
-        predicates.add(cb.like(root.join("department").get("name"), "%" + request.departmentName() + "%"));
+        var deptJoin = departmentJoin != null ? departmentJoin : root.join("department", JoinType.LEFT);
+        predicates.add(cb.like(deptJoin.get("name"), "%" + request.departmentName() + "%"));
       }
 
       // 3. 직함 (부분 일치: LIKE %keyword%)

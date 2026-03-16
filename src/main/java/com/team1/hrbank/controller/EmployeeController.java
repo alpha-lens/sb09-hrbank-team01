@@ -59,10 +59,10 @@ public class EmployeeController {
     return employeeService.createEmployee(employeeCreateRequest, profileImage);
   }
 
-  @PatchMapping("/{id}")
+  @PatchMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public EmployeeDto updateEmployee(@PathVariable long id,
-      @RequestBody EmployeeUpdateRequest employeeUpdateRequest,
-      @RequestPart(required = false) MultipartFile profileImage) throws IOException {
+      @RequestPart EmployeeUpdateRequest employeeUpdateRequest,
+      @RequestPart(value = "profile", required = false) MultipartFile profileImage) throws IOException {
     return employeeService.updateEmployee(id, employeeUpdateRequest, profileImage);
   }
 

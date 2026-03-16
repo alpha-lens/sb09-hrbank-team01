@@ -28,7 +28,7 @@ public class Backup {  // ① id, createdAt 상속
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @Column(nullable = false, length = 45)
+  @Column(nullable = false, length = 50)
   private String worker;
 
   @Column(nullable = false)

@@ -1,12 +1,6 @@
 spring:
   profiles:
     include: local
-    jackson:
-      serialization:
-        write-dates-as-timestamps: false
-      mvc:
-        format:
-          date-time: iso
   servlet:
     multipart:
       enabled: true

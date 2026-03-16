@@ -47,7 +47,7 @@ public class DepartmentController {
   @PostMapping
   public ResponseEntity<DepartmentDto> createDepartment(@RequestBody DepartmentCreateRequest request) {
     DepartmentDto response = departmentService.createDepartment(request);
-    return ResponseEntity.ok(response);
+    return ResponseEntity.status(HttpStatus.CREATED).body(response);
   }
 
   // 2. 부서 수정

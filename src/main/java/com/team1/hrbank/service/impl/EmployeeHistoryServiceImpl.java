@@ -68,14 +68,14 @@ public class EmployeeHistoryServiceImpl implements EmployeeHistoryService {
   }
 
   @Override
-  public List<EmployeeHistoryDto> findEmployeeHistoriesByRevisionsBetween(Long fromRevision,
-      Long toRevision) {
-    return employeeHistoryRepository.findAll()
-        .stream()
-        // id가 fromRevision 이상, toRevision 이하인 것만 필터링
-        .filter(h -> h.getId() >= fromRevision && h.getId() <= toRevision)
-        .map(employeeHistoryMapper::toDto) // Mapper로 변환
-        .collect(Collectors.toList());
+  public long countByDateRange(Instant fromDate, Instant toDate) {
+    if (fromDate == null) {
+      fromDate = Instant.EPOCH;
+    }
+    if (toDate == null) {
+      toDate = Instant.now();
+    }
+    return employeeHistoryRepository.countByCreatedAtBetween(fromDate, toDate);
   }
 
   @Override

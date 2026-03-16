@@ -72,20 +72,20 @@ public class EmployeeServiceImpl implements EmployeeService {
   private String formatDate(LocalDate date, EmployeeTrendTimeUnit unit) {
     return switch (unit) {
       case DAY -> date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+      case WEEK -> date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
       case MONTH -> date.format(DateTimeFormatter.ofPattern("yyyy-MM"));
+      case QUARTER -> date.format(DateTimeFormatter.ofPattern("yyyy-MM"));
       case YEAR -> date.format(DateTimeFormatter.ofPattern("yyyy"));
-      case QUARTER -> null;
-      case WEEK -> null;
     };
   }
 
   private LocalDate incrementDate(LocalDate date, EmployeeTrendTimeUnit unit) {
     return switch (unit) {
       case DAY -> date.plusDays(1);
+      case WEEK -> date.plusWeeks(1);
       case MONTH -> date.plusMonths(1);
+      case QUARTER -> date.plusMonths(3);
       case YEAR -> date.plusYears(1);
-      case QUARTER -> null;
-      case WEEK -> null;
     };
   }
 
@@ -113,7 +113,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         .orElseThrow(() -> new NoSuchElementException("해당 부서를 찾을 수 없습니다."));
     String employeeNumber = lastEmployeeNumber != null ?
         generateEmployeeNumber(prefix,Integer.parseInt(lastEmployeeNumber.substring(7)))
-        : generateEmployeeNumber(prefix, 1);
+        : generateEmployeeNumber(prefix, 0);
 
     Employee employee = Employee.of(employeeNumber, request.name(), request.email(), department,
         request.position());
@@ -276,6 +276,6 @@ public class EmployeeServiceImpl implements EmployeeService {
     if (startDate == null) {
       startDate = endDate.minusWeeks(1);
     }
-    return employeeRepository.findEmployeeCount(status, startDate, endDate);
+    return employeeRepository.findEmployeeCount(status != null ? status.name() : "ACTIVE", startDate, endDate);
   }
 }
