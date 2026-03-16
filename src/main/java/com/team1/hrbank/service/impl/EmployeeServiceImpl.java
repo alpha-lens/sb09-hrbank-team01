@@ -74,8 +74,7 @@ public class EmployeeServiceImpl implements EmployeeService {
       case DAY -> date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
       case MONTH -> date.format(DateTimeFormatter.ofPattern("yyyy-MM"));
       case YEAR -> date.format(DateTimeFormatter.ofPattern("yyyy"));
-      case QUARTER -> null;
-      case WEEK -> null;
+      case QUARTER, WEEK -> null;
     };
   }
 
@@ -84,8 +83,7 @@ public class EmployeeServiceImpl implements EmployeeService {
       case DAY -> date.plusDays(1);
       case MONTH -> date.plusMonths(1);
       case YEAR -> date.plusYears(1);
-      case QUARTER -> null;
-      case WEEK -> null;
+      case QUARTER, WEEK -> null;
     };
   }
 
@@ -255,10 +253,14 @@ public class EmployeeServiceImpl implements EmployeeService {
       LocalDate endDate,
       EmployeeDistribution distribution, EmployeeStatus status) {
 
-    List<DistributionMapping> rawData = switch (distribution) {
-      case DEPARTMENT -> employeeRepository.findDistributionByDepartment(status.name());
-      case POSITION -> employeeRepository.findDistributionByPosition(status.name());
-    };
+    List<DistributionMapping> rawData = null;
+    if(status == null) status = EmployeeStatus.ACTIVE;
+
+    if(distribution == EmployeeDistribution.POSITION) {
+      rawData = employeeRepository.findDistributionByPosition(status.name());
+    } else {
+      rawData = employeeRepository.findDistributionByDepartment(status.name());
+    }
 
     long totalCount = rawData.stream()
         .mapToLong(DistributionMapping::getCount)
