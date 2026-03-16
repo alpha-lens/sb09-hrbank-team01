@@ -76,11 +76,7 @@ public class EmployeeHistoryServiceImpl implements EmployeeHistoryService {
   {
     Long cursorId = null;
     if (request.cursor() != null) {
-      try {
-        cursorId = Long.parseLong(request.cursor());
-      } catch (NumberFormatException e) {
-        throw new IllegalArgumentException("유효하지 않은 cursor 값: " + request.cursor());
-      }
+      cursorId = request.cursor(); // Long이라 그냥 대입
     } else {
       cursorId = request.idAfter();
     }
@@ -114,11 +110,11 @@ public class EmployeeHistoryServiceImpl implements EmployeeHistoryService {
         : histories;
 
     // 다음 페이지 커서 = 현재 페이지 마지막 요소의 id
-    String nextCursor = null;
+    Long nextCursor = null;
     Long nextIdAfter = null;
     if (hasNext && !content.isEmpty()) {
       EmployeeHistory last = content.get(content.size() - 1);
-      nextCursor = String.valueOf(last.getId());
+      nextCursor = last.getId();
       nextIdAfter = last.getId();
     }
 
