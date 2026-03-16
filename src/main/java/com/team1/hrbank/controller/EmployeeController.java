@@ -13,14 +13,15 @@ import com.team1.hrbank.service.EmployeeService;
 import java.io.IOException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
@@ -52,16 +53,16 @@ public class EmployeeController {
   }
 
   @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  public EmployeeDto createEmployee(
+  public ResponseEntity<EmployeeDto> createEmployee(
       @RequestPart EmployeeCreateRequest employeeCreateRequest,
       @RequestPart(value = "profile", required = false) MultipartFile profileImage
   ) throws IOException {
-    return employeeService.createEmployee(employeeCreateRequest, profileImage);
+    return ResponseEntity.status(HttpStatus.CREATED).body(employeeService.createEmployee(employeeCreateRequest, profileImage));
   }
 
   @PatchMapping("/{id}")
   public EmployeeDto updateEmployee(@PathVariable long id,
-      @RequestBody EmployeeUpdateRequest employeeUpdateRequest,
+      @RequestPart EmployeeUpdateRequest employeeUpdateRequest,
       @RequestPart(required = false) MultipartFile profileImage) throws IOException {
     return employeeService.updateEmployee(id, employeeUpdateRequest, profileImage);
   }
