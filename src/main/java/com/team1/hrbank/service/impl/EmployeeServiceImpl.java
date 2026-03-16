@@ -286,6 +286,6 @@ public class EmployeeServiceImpl implements EmployeeService {
     if (startDate == null) {
       startDate = endDate.minusWeeks(1);
     }
-    return employeeRepository.findEmployeeCount(status, startDate, endDate);
+    return employeeRepository.findEmployeeCount(status.name(), startDate, endDate);
   }
 }

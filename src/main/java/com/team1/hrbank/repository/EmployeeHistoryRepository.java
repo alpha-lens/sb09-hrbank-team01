@@ -29,8 +29,7 @@ public interface EmployeeHistoryRepository extends JpaRepository<EmployeeHistory
                 OR h.createdAt >= :atFrom)
           AND (:atTo IS NULL
                 OR h.createdAt <= :atTo)
-          AND (:idBefore IS NULL
-                OR h.id < :idBefore)
+          AND (:idBefore = 0L OR h.id < :idBefore)
         """)
   List<EmployeeHistory> findHistoriesWithConditions(
       @Param("employeeNumber") String employeeNumber,

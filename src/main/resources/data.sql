@@ -23,9 +23,9 @@ INSERT INTO employees (employee_number, name, email, department_id, position, hi
 
 -- 4. employee_histories (변경 이력)
 INSERT INTO employee_histories (type, employee_number, diff_json, memo, ip_address) VALUES
-                                                                                        ('CREATED', 'EMP2020001', '{"name": "김철수", "dept": "경영지원팀"}', '신규 입사 처리', '192.168.0.10'),
-                                                                                        ('UPDATED', 'EMP2022033', '{"status": "ON_LEAVE"}', '개인 사정으로 인한 휴직', '192.168.0.15'),
-                                                                                        ('CREATED', 'EMP2024012', '{"name": "정마케", "dept": "마케팅팀"}', '신규 입사 처리', '127.0.0.1');
+                                                                                        ('CREATED', 'EMP2020001', '[{"propertyName":"name","before":null,"after":"김철수"},{"propertyName":"department","before":null,"after":"경영지원팀"}]', '신규 입사 처리', '192.168.0.10'),
+                                                                                        ('UPDATED', 'EMP2022033', '[{"propertyName":"status","before":"ACTIVE","after":"ON_LEAVE"}]', '개인 사정으로 인한 휴직', '192.168.0.15'),
+                                                                                        ('CREATED', 'EMP2024012', '[{"propertyName":"name","before":null,"after":"정마케"},{"propertyName":"department","before":null,"after":"마케팅팀"}]', '신규 입사 처리', '127.0.0.1');
 
 -- 5. backups (백업 이력)
 INSERT INTO backups (worker, started_at, ended_at, status, file_id) VALUES
