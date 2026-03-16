@@ -83,7 +83,7 @@ public class EmployeeHistoryServiceImpl implements EmployeeHistoryService {
       HistoryType type, String memo, String ipAddress, Instant atFrom, Instant atTo, Long idAfter,
       String cursor, int size, String sortField, String sortDirection
   ) {
-    Long cursorId = (cursor != null) ? Long.parseLong(cursor) : idAfter;
+    Long cursorId = (cursor != null) ? Long.parseLong(cursor) : (idAfter != null ? idAfter : 0L);
     // 1 조회
     List<EmployeeHistory> histories =
         employeeHistoryRepository.findHistoriesWithConditions(
