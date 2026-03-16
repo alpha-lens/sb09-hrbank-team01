@@ -61,7 +61,7 @@ public class EmployeeController {
 
   @PatchMapping("/{id}")
   public EmployeeDto updateEmployee(@PathVariable long id,
-      @RequestBody EmployeeUpdateRequest employeeUpdateRequest,
+      @RequestPart EmployeeUpdateRequest employeeUpdateRequest,
       @RequestPart(required = false) MultipartFile profileImage) throws IOException {
     return employeeService.updateEmployee(id, employeeUpdateRequest, profileImage);
   }
