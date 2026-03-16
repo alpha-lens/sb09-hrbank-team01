@@ -13,7 +13,7 @@ public interface DepartmentService {
 
   DepartmentDto findDepartment(Long id);
 
-  List<DepartmentDto> findAllDepartments();
+  List<DepartmentDto> findAllDepartments(String keyword);
 
   void deleteDepartment(Long id);
 
