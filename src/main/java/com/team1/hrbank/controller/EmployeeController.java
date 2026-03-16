@@ -6,6 +6,7 @@ import com.team1.hrbank.dto.dashboard.EmployeeTrendDto;
 import com.team1.hrbank.dto.request.EmployeeCountRequestDto;
 import com.team1.hrbank.dto.request.EmployeeCreateRequest;
 import com.team1.hrbank.dto.request.EmployeeDistributionRequestDto;
+import com.team1.hrbank.dto.request.EmployeeSearchRequest;
 import com.team1.hrbank.dto.request.EmployeeTrendRequestDto;
 import com.team1.hrbank.dto.request.EmployeeUpdateRequest;
 import com.team1.hrbank.service.EmployeeService;
@@ -39,8 +40,10 @@ public class EmployeeController {
   private final EmployeeService employeeService;
 
   @GetMapping
-  public List<EmployeeDto> getEmployees() {
-    return employeeService.findAllEmployees();
+  public List<EmployeeDto> getEmployees(
+      @ModelAttribute EmployeeSearchRequest request
+  ) {
+    return employeeService.findAllEmployees(request);
   }
 
   @GetMapping("/{id}")
