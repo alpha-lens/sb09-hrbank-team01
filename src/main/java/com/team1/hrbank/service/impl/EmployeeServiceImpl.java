@@ -134,8 +134,12 @@ public class EmployeeServiceImpl implements EmployeeService {
       throws IOException {
     Employee employee = employeeRepository.findById(id)
         .orElseThrow(() -> new NoSuchElementException("해당 직원을 찾을 수 없습니다 : " + id));
-    Department department = departmentRepository.findById(request.departmentId())
-        .orElseThrow(() -> new NoSuchElementException("해당 부서를 찾을 수 없습니다 : " + request.departmentId()));
+    Department department = null;
+    if (request.departmentId() != null) {
+      department = departmentRepository.findById(request.departmentId())
+          .orElseThrow(
+              () -> new NoSuchElementException("해당 부서를 찾을 수 없습니다 : " + request.departmentId()));
+    }
 
     employee.update(
         request.name(), request.email(), department, request.position(), request.hireDate(),
