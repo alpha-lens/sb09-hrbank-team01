@@ -1,5 +1,6 @@
 package com.team1.hrbank.controller;
 
+import com.team1.hrbank.dto.EmployeeHistoryDetailDto;
 import com.team1.hrbank.dto.cursor.CursorPageResponseEmployeeHistoryDto;
 import com.team1.hrbank.dto.request.EmployeeHistoryCreateRequest;
 import com.team1.hrbank.dto.request.EmployeeHistorySearchRequest;
@@ -13,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -31,10 +33,8 @@ public class EmployeeHistoryController {
   @PostMapping
   public ResponseEntity<Void> createEmployeeHistory(
       @RequestBody EmployeeHistoryCreateRequest request,
-      HttpServletRequest httpRequest  // IP 추출용
+      HttpServletRequest httpRequest
   ) {
-    // X-Forwarded-For 헤더 우선 확인 (프록시 환경)
-    // 없으면 직접 연결된 클라이언트 IP 사용
     String ipAddress = httpRequest.getHeader("X-Forwarded-For");
     if (ipAddress == null) {
       ipAddress = httpRequest.getRemoteAddr();
@@ -58,8 +58,25 @@ public class EmployeeHistoryController {
     );
   }
 
+  @Operation(summary = "직원 정보 수정 이력 상세 조회")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "조회 성공"),
+      @ApiResponse(responseCode = "404", description = "이력을 찾을 수 없습니다")
+  })
+  @GetMapping("/{id}")
+  public ResponseEntity<EmployeeHistoryDetailDto> findEmployeeHistory(
+      @PathVariable Long id
+  ) {
+    return ResponseEntity.ok(employeeHistoryService.findEmployeeHistory(id));
+  }
+
   @Operation(summary = "수정 이력 건수 조회")
-  @ApiResponse(responseCode = "200", description = "조회")
+  @ApiResponses(
+      value = {
+          @ApiResponse(responseCode = "200", description = "조회 성공"),
+          @ApiResponse(responseCode = "400", description = "잘못된 요청입니다")
+      }
+  )
   @GetMapping("/count")
   public ResponseEntity<Long> findEmployeeHistoriesByRevisionsBetween(
       @RequestParam(required = false) Instant fromDate,
