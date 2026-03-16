@@ -8,16 +8,19 @@ import com.team1.hrbank.dto.EmployeeHistoryDetailDto;
 import com.team1.hrbank.dto.EmployeeHistoryDto;
 import com.team1.hrbank.dto.cursor.CursorPageResponseEmployeeHistoryDto;
 import com.team1.hrbank.dto.request.EmployeeHistoryCreateRequest;
+import com.team1.hrbank.dto.request.EmployeeHistorySearchRequest;
 import com.team1.hrbank.entity.EmployeeHistory;
-import com.team1.hrbank.entity.HistoryType;
 import com.team1.hrbank.global.ResourceNotFoundException;
 import com.team1.hrbank.mapper.EmployeeHistoryMapper;
 import com.team1.hrbank.repository.EmployeeHistoryRepository;
 import com.team1.hrbank.service.EmployeeHistoryService;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,14 +30,14 @@ import org.springframework.transaction.annotation.Transactional;
 public class EmployeeHistoryServiceImpl implements EmployeeHistoryService {
 
   private final EmployeeHistoryRepository employeeHistoryRepository;
-  private final EmployeeHistoryMapper employeeHistoryMapper; // Entity↔DTO 변환
+  private final EmployeeHistoryMapper employeeHistoryMapper;
+  @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
   private final ObjectMapper objectMapper;
 
   @Override
   @Transactional
   public void createEmployeeHistory(EmployeeHistoryCreateRequest request, String ipAddress) {
 
-    // request.diffs()로 받은 List<DiffDto>를 JSON 문자열로 변환
     String diffJson = serializeDiff(request.diffs());
 
     EmployeeHistory history = EmployeeHistory.of(
@@ -60,77 +63,81 @@ public class EmployeeHistoryServiceImpl implements EmployeeHistoryService {
   }
 
   @Override
-  public List<EmployeeHistoryDto> findAllEmployeeHistories() {
-    return employeeHistoryRepository.findAll()
-        .stream()
-        .map(employeeHistoryMapper::toDto)
-        .collect(Collectors.toList());
+  public long countEmployeeHistories(Instant fromDate, Instant toDate) {
+
+    Instant from = fromDate != null ? fromDate : Instant.now().minus(7, ChronoUnit.DAYS);
+    Instant to = toDate != null ? toDate : Instant.now();
+
+    return employeeHistoryRepository.countByCreatedAtBetween(from, to);
   }
 
   @Override
-  public List<EmployeeHistoryDto> findEmployeeHistoriesByRevisionsBetween(Long fromRevision,
-      Long toRevision) {
-    return employeeHistoryRepository.findAll()
-        .stream()
-        // id가 fromRevision 이상, toRevision 이하인 것만 필터링
-        .filter(h -> h.getId() >= fromRevision && h.getId() <= toRevision)
-        .map(employeeHistoryMapper::toDto) // Mapper로 변환
-        .collect(Collectors.toList());
-  }
+  public CursorPageResponseEmployeeHistoryDto findEmployeeHistories(EmployeeHistorySearchRequest request)
+  {
+    Long cursorId = null;
+    if (request.cursor() != null) {
+      cursorId = request.cursor(); // Long이라 그냥 대입
+    } else {
+      cursorId = request.idAfter();
+    }
 
-  @Override
-  public CursorPageResponseEmployeeHistoryDto findEmployeeHistories(String employeeNumber,
-      HistoryType type, String memo, String ipAddress, Instant atFrom, Instant atTo, Long idAfter,
-      String cursor, int size, String sortField, String sortDirection
-  ) {
-    Long cursorId = (cursor != null) ? Long.parseLong(cursor) : idAfter;
+    String sortField = "at".equals(request.sortField()) ? "createdAt" : "ipAddress";
+
+    // sortDirection: "asc" 또는 "desc"
+    Sort.Direction direction = Sort.Direction.fromString(
+        request.sortDirection() != null ? request.sortDirection() : "desc"
+    );
+
+    Pageable pageable = PageRequest.of(0, request.size() + 1,
+        Sort.by(direction, sortField));
+
     // 1 조회
     List<EmployeeHistory> histories =
         employeeHistoryRepository.findHistoriesWithConditions(
-            employeeNumber,
-            memo,
-            ipAddress,
-            type,
-            atFrom,
-            atTo,
-            cursorId
+            request.employeeNumber(),
+            request.memo(),
+            request.ipAddress(),
+            request.type(),
+            request.atFrom(),
+            request.atTo(),
+            cursorId,
+            pageable
         );
 
-    // 2 size + 1 만큼만 사용
-    int limit = Math.min(histories.size(), size + 1);
-    histories = histories.subList(0, limit);
+    boolean hasNext = histories.size() > request.size();
+    List<EmployeeHistory> content = hasNext
+        ? histories.subList(0, request.size())
+        : histories;
 
-    // 3 다음 페이지 존재 여부
-    boolean hasNext = histories.size() > size;
-
-    if (hasNext) {
-      histories = histories.subList(0, size);
-    }
-
-    // 4 DTO 변환
-    List<EmployeeHistoryDto> content = histories.stream()
-        .map(employeeHistoryMapper::toDto)
-        .toList();
-
-    // 5 next cursor 계산
-    String nextCursor = null;
+    // 다음 페이지 커서 = 현재 페이지 마지막 요소의 id
+    Long nextCursor = null;
     Long nextIdAfter = null;
-
-    if (hasNext && !histories.isEmpty()) {
-      EmployeeHistory last = histories.get(histories.size() - 1);
-      nextCursor = last.getCreatedAt().toString();
+    if (hasNext && !content.isEmpty()) {
+      EmployeeHistory last = content.get(content.size() - 1);
+      nextCursor = last.getId();
       nextIdAfter = last.getId();
     }
 
-    // 6 전체 개수 조회
-    long total = employeeHistoryRepository.count();
+    // DTO 변환
+    List<EmployeeHistoryDto> dtoContent = content.stream()
+        .map(employeeHistoryMapper::toDto)
+        .toList();
 
-    // 7 응답 생성
+    // 전체 건수
+    long total = employeeHistoryRepository.countByConditions(
+        request.employeeNumber(),
+        request.memo(),
+        request.ipAddress(),
+        request.type(),
+        request.atFrom(),
+        request.atTo()
+    );
+
     return new CursorPageResponseEmployeeHistoryDto(
-        content,
+        dtoContent,
         nextCursor,
         nextIdAfter,
-        size,
+        request.size(),
         total,
         hasNext
     );
