@@ -4,11 +4,9 @@ import com.team1.hrbank.dto.EmployeeHistoryDto;
 import java.util.List;
 
 public record CursorPageResponseEmployeeHistoryDto (
-    //<T>?
     List<EmployeeHistoryDto> content,
     String nextCursor,
-    //Long?
-    long nextIdAfter,
+    Long nextIdAfter,
     int size,
     long totalElements,
     boolean hasNext
