@@ -19,7 +19,7 @@ public class EmployeeHistoryServiceImpl implements EmployeeHistoryService {
 
   private final EmployeeHistoryRepository employeeHistoryRepository;
 
-  @Override
+
   public EmployeeHistoryDto createEmployeeHistory(EmployeeHistoryCreateRequest request) {
 
     EmployeeHistory history = EmployeeHistory.of(

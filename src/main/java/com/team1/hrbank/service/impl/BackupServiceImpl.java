@@ -200,7 +200,7 @@ public class BackupServiceImpl implements BackupService {
 
       do {
         Pageable pageable = PageRequest.of(page++, chunkSize, Sort.by("id"));
-        chunk = employeeRepository.findAll(pageable);
+        chunk = employeeRepository.findAllWithDepartment(pageable);
 
         for (Employee emp : chunk.getContent()) {
           writer.write(toCsvRow(emp));
