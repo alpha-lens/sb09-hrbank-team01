@@ -1,6 +1,5 @@
 package com.team1.hrbank.controller;
 
-import com.team1.hrbank.dto.EmployeeHistoryDto;
 import com.team1.hrbank.dto.cursor.CursorPageResponseEmployeeHistoryDto;
 import com.team1.hrbank.dto.request.EmployeeHistoryCreateRequest;
 import com.team1.hrbank.dto.request.EmployeeHistorySearchRequest;
@@ -9,7 +8,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.servlet.http.HttpServletRequest;
-import java.util.List;
+import java.time.Instant;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -62,12 +61,13 @@ public class EmployeeHistoryController {
   @Operation(summary = "수정 이력 건수 조회")
   @ApiResponse(responseCode = "200", description = "조회")
   @GetMapping("/count")
-  public ResponseEntity<List<EmployeeHistoryDto>> findEmployeeHistoriesByRevisionsBetween(
-      @RequestParam(required = false) Long fromDate,
-      @RequestParam(required = false) Long toDate
+  public ResponseEntity<Long> findEmployeeHistoriesByRevisionsBetween(
+      @RequestParam(required = false) Instant fromDate,
+      @RequestParam(required = false) Instant toDate
   ) {
-    return ResponseEntity.ok(employeeHistoryService.findEmployeeHistoriesByRevisionsBetween(fromDate, toDate));
+    return ResponseEntity.ok(
+        employeeHistoryService.countEmployeeHistories(fromDate, toDate)
+    );
   }
-
 
 }

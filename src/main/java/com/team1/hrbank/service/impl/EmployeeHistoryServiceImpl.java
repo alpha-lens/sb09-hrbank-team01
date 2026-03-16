@@ -14,8 +14,9 @@ import com.team1.hrbank.global.ResourceNotFoundException;
 import com.team1.hrbank.mapper.EmployeeHistoryMapper;
 import com.team1.hrbank.repository.EmployeeHistoryRepository;
 import com.team1.hrbank.service.EmployeeHistoryService;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -62,14 +63,12 @@ public class EmployeeHistoryServiceImpl implements EmployeeHistoryService {
   }
 
   @Override
-  public List<EmployeeHistoryDto> findEmployeeHistoriesByRevisionsBetween(Long fromDate,
-      Long toDate) {
-    return employeeHistoryRepository.findAll()
-        .stream()
-        // id가 fromDate 이상, toDate 이하인 것만 필터링
-        .filter(h -> h.getId() >= fromDate && h.getId() <= toDate)
-        .map(employeeHistoryMapper::toDto) // Mapper로 변환
-        .collect(Collectors.toList());
+  public long countEmployeeHistories(Instant fromDate, Instant toDate) {
+
+    Instant from = fromDate != null ? fromDate : Instant.now().minus(7, ChronoUnit.DAYS);
+    Instant to = toDate != null ? toDate : Instant.now();
+
+    return employeeHistoryRepository.countByCreatedAtBetween(from, to);
   }
 
   @Override
