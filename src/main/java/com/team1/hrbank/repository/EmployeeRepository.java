@@ -9,6 +9,7 @@ import java.time.LocalDate;
 import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -20,7 +21,7 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long>,
   @Query("SELECT MAX(e.employeeNumber) FROM Employee e WHERE e.employeeNumber LIKE :prefix%")
   String findLastEmployeeNameByPrefix(@Param("prefix") String prefix);
 
-  List<Employee> findAll();
+  Page<Employee> findAll(Specification<Employee> spec, Pageable pageable);
 
   @Query(value = "SELECT COUNT(*) FROM employees WHERE status = :status "
                  + "AND created_at::date BETWEEN :startDate AND :endDate", nativeQuery = true)
