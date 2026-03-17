@@ -13,6 +13,7 @@ import com.team1.hrbank.repository.specification.BackupSpecification;
 import com.team1.hrbank.repository.BinaryContentRepository;
 import com.team1.hrbank.repository.EmployeeRepository;
 import com.team1.hrbank.service.BackupService;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.transaction.annotation.Transactional;
 import java.nio.file.Path;
 import java.io.BufferedWriter;
@@ -291,5 +292,12 @@ public class BackupServiceImpl implements BackupService {
         .findTopByStatusOrderByStartedAtDesc(BackupStatus.COMPLETED)
         .map(backupMapper::toDto)
         .orElse(null);
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public Backup findById(Long id) {
+    return backupRepository.findById(id)
+        .orElseThrow(() -> new EntityNotFoundException("백업을 찾을 수 없습니다."));
   }
 }

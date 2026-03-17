@@ -76,12 +76,6 @@ public class BackupController {
     return remoteAddr;
   }
 
-  @GetMapping("/latest")
-  @Operation(summary = "최신 백업 조회")
-  public ResponseEntity<BackupDto> getLatest() {
-    return ResponseEntity.ok(backupService.getLatest());
-  }
-
   @GetMapping("/{id}/download")
   @Operation(summary = "백업 파일 다운로드")
   public ResponseEntity<Resource> download(@PathVariable Long id) throws IOException {

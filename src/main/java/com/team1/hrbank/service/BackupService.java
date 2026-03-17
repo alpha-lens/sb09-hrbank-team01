@@ -2,6 +2,7 @@ package com.team1.hrbank.service;
 
 import com.team1.hrbank.dto.BackupDto;
 import com.team1.hrbank.dto.cursor.CursorPageResponseBackupDto;
+import com.team1.hrbank.entity.Backup;
 import com.team1.hrbank.entity.BackupStatus;
 import java.time.Instant;
 
@@ -11,6 +12,8 @@ public interface BackupService {
   BackupDto runBackup(String worker);
 
   BackupDto getLatest();
+
+  Backup findById(Long id);
 
   // 백업 이력 목록 조회
   CursorPageResponseBackupDto getList(
