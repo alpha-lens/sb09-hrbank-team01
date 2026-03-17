@@ -42,7 +42,7 @@ import java.time.Instant;
 @Tag(name = "Backup", description = "데이터 백업 API")
 public class BackupController {
 
-  @Value("${hrbank.backup.dir}")
+  @Value("${backup.dir:./backups}")
   private String backupDir;
 
   private final BackupService backupService;
