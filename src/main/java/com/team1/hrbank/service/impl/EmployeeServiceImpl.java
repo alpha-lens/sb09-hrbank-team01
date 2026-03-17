@@ -176,11 +176,11 @@ public class EmployeeServiceImpl implements EmployeeService {
     List<Employee> resultList = hasNext ? content.subList(0, request.size()) : content;
 
     String nextCursor = null;
-    int nextIdAfter = 0;
+    Long nextIdAfter = 0L;
     if (!resultList.isEmpty()) {
       Long lastId = resultList.get(resultList.size() - 1).getId();
       nextCursor = String.valueOf(lastId);
-      nextIdAfter = lastId.intValue();
+      nextIdAfter = lastId;
     }
 
     List<EmployeeDto> dtoList = resultList.stream().map(this::toDto).toList();
@@ -192,7 +192,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         nextCursor,
         nextIdAfter,
         request.size(),
-        (int) totalElements,
+        totalElements,
         hasNext
     );
   }

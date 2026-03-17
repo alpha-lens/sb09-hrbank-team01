@@ -11,7 +11,7 @@ public record EmployeeSearchRequest(
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hireDateFrom,
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hireDateTo,
     String status,
-    Integer idAfter,
+    Long idAfter,
     String cursor,
     Integer size,
     String sortField,
