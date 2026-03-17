@@ -10,12 +10,14 @@ import com.team1.hrbank.global.ResourceNotFoundException;
 import com.team1.hrbank.repository.DepartmentRepository;
 import com.team1.hrbank.repository.EmployeeRepository;
 import com.team1.hrbank.service.DepartmentService;
+import com.team1.hrbank.specification.DepartmentSpecification;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,7 +33,7 @@ public class DepartmentServiceImpl implements DepartmentService {
   @Transactional
   public DepartmentDto createDepartment(DepartmentCreateRequest request) {
     if (departmentRepository.existsByName(request.name())) {
-      throw new IllegalArgumentException("이미 존재하는 부서 이름이에요");
+      throw new IllegalArgumentException("이미 존재하는 부서 이름입니다");
     }
 
     Department department = Department.of(
@@ -52,7 +54,7 @@ public class DepartmentServiceImpl implements DepartmentService {
     if (request.name() != null
         && !request.name().equals(department.getName())) {
       if (departmentRepository.existsByName(request.name())) {
-        throw new IllegalArgumentException("이미 존재하는 부서 이름입니다.");
+        throw new IllegalArgumentException("이미 존재하는 부서 이름입니다");
       }
     }
 
@@ -77,18 +79,30 @@ public class DepartmentServiceImpl implements DepartmentService {
   public CursorPageResponseDepartmentDto findAllDepartments(DepartmentSearchRequest request) {
 
     int limit = (request.size() != null && request.size() > 0) ? request.size() : 10;
-    Pageable pageable = PageRequest.of(0, limit + 1);
+    // 1. 정렬 기준 세팅
+    String sortField = (request.sortField() != null && !request.sortField().trim().isEmpty()) ? request.sortField() : "id";
+    Sort.Direction direction = "desc".equalsIgnoreCase(request.sortDirection()) ? Sort.Direction.DESC : Sort.Direction.ASC;
+    Sort sort = Sort.by(direction, sortField).and(Sort.by(Sort.Direction.ASC, "id"));
 
-    List<Department> departments = departmentRepository.findDepartmentsWithCursor(
-        request.nameOrDescription(), request.cursor(), pageable
-    );
+    Pageable pageable = PageRequest.of(0, limit + 1, sort);
 
+    // 2. 기준이 될 커서 부서 가져오기
+    Department cursorDept = null;
+    if (request.cursor() != null && request.cursor() > 0) {
+      cursorDept = departmentRepository.findById(request.cursor()).orElse(null);
+    }
+
+    // 3. Specification 사용해서 조회
+    List<Department> departments = departmentRepository.findAll(
+        DepartmentSpecification.filterBy(request, cursorDept), pageable
+    ).getContent();
+
+    // 4. hasNext 판단 및 자르기
     boolean hasNext = departments.size() > limit;
     List<Department> contentEntities = hasNext ? departments.subList(0, limit) : departments;
 
-    long totalElements = (request.nameOrDescription() == null || request.nameOrDescription().trim().isEmpty())
-        ? departmentRepository.count()
-        : departmentRepository.countByKeyword(request.nameOrDescription());
+    long totalElements = departmentRepository.count(DepartmentSpecification.filterBy(request, null)
+    );
 
     if (contentEntities.isEmpty()) {
       return new CursorPageResponseDepartmentDto(List.of(), null, 0L, limit, totalElements, false);
