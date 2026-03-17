@@ -3,6 +3,7 @@ package com.team1.hrbank.service.impl;
 import com.team1.hrbank.dto.DepartmentDto;
 import com.team1.hrbank.dto.cursor.CursorPageResponseDepartmentDto;
 import com.team1.hrbank.dto.request.DepartmentCreateRequest;
+import com.team1.hrbank.dto.request.DepartmentSearchRequest;
 import com.team1.hrbank.dto.request.DepartmentUpdateRequest;
 import com.team1.hrbank.entity.Department;
 import com.team1.hrbank.global.ResourceNotFoundException;
@@ -73,30 +74,21 @@ public class DepartmentServiceImpl implements DepartmentService {
   }
 
   @Override
-  public CursorPageResponseDepartmentDto findAllDepartments(
-      String keyword, Long idAfter, String cursor, Integer size, String sortField, String sortDirection) {
+  public CursorPageResponseDepartmentDto findAllDepartments(DepartmentSearchRequest request) {
 
-    Long targetIdAfter = idAfter;
-    if (targetIdAfter == null && cursor != null && !cursor.trim().isEmpty()) {
-      try {
-        targetIdAfter = Long.parseLong(cursor);
-      } catch (NumberFormatException e) {
-      }
-    }
-
-    if (targetIdAfter == null) targetIdAfter = 0L;
-
-    int limit = (size != null && size > 0) ? size : 10;
-
+    int limit = (request.size() != null && request.size() > 0) ? request.size() : 10;
     Pageable pageable = PageRequest.of(0, limit + 1);
-    List<Department> departments = departmentRepository.findDepartmentsWithCursor(keyword, targetIdAfter, pageable);
+
+    List<Department> departments = departmentRepository.findDepartmentsWithCursor(
+        request.keyword(), request.cursor(), pageable
+    );
 
     boolean hasNext = departments.size() > limit;
     List<Department> contentEntities = hasNext ? departments.subList(0, limit) : departments;
 
-    long totalElements = (keyword == null || keyword.trim().isEmpty())
+    long totalElements = (request.keyword() == null || request.keyword().trim().isEmpty())
         ? departmentRepository.count()
-        : departmentRepository.countByKeyword(keyword);
+        : departmentRepository.countByKeyword(request.keyword());
 
     if (contentEntities.isEmpty()) {
       return new CursorPageResponseDepartmentDto(List.of(), null, 0L, limit, totalElements, false);
@@ -117,8 +109,8 @@ public class DepartmentServiceImpl implements DepartmentService {
         })
         .toList();
 
-    String nextCursor = null;
     long nextIdAfter = 0L;
+    String nextCursor = null;
     if (hasNext) {
       Department lastItem = contentEntities.get(contentEntities.size() - 1);
       nextIdAfter = lastItem.getId();
