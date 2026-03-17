@@ -14,7 +14,7 @@ public class EmployeeSpecification {
 
   public static Specification<Employee> filterBy(EmployeeSearchRequest request) {
     return (root, query, cb) -> {
-      if (query.getResultType() != Long.class) {
+      if (query.getResultType() != Long.class && query.getResultType() != long.class) {
         root.fetch("department", JoinType.LEFT);
       }
 
@@ -65,7 +65,7 @@ public class EmployeeSpecification {
 
       // 7. 커서 기반 페이징 (idAfter)
       // asc -> id > idAfter
-      if(request.idAfter() != null) {
+      if (request.idAfter() != null && request.idAfter() > 0) {
         predicates.add(cb.gt(root.get("id"), request.idAfter()));
       }
 
