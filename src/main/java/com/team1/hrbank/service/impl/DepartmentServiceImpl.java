@@ -1,7 +1,9 @@
 package com.team1.hrbank.service.impl;
 
 import com.team1.hrbank.dto.DepartmentDto;
+import com.team1.hrbank.dto.cursor.CursorPageResponseDepartmentDto;
 import com.team1.hrbank.dto.request.DepartmentCreateRequest;
+import com.team1.hrbank.dto.request.DepartmentSearchRequest;
 import com.team1.hrbank.dto.request.DepartmentUpdateRequest;
 import com.team1.hrbank.entity.Department;
 import com.team1.hrbank.global.ResourceNotFoundException;
@@ -10,7 +12,10 @@ import com.team1.hrbank.repository.EmployeeRepository;
 import com.team1.hrbank.service.DepartmentService;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -69,38 +74,52 @@ public class DepartmentServiceImpl implements DepartmentService {
   }
 
   @Override
-  public List<DepartmentDto> findAllDepartments(String keyword) {
-    List<Department> departments;
+  public CursorPageResponseDepartmentDto findAllDepartments(DepartmentSearchRequest request) {
 
-    if (keyword == null || keyword.trim().isEmpty()) {
-      departments = departmentRepository.findAll();
-    }  else {
-      departments = departmentRepository.searchByKeyword(keyword);
+    int limit = (request.size() != null && request.size() > 0) ? request.size() : 10;
+    Pageable pageable = PageRequest.of(0, limit + 1);
+
+    List<Department> departments = departmentRepository.findDepartmentsWithCursor(
+        request.keyword(), request.cursor(), pageable
+    );
+
+    boolean hasNext = departments.size() > limit;
+    List<Department> contentEntities = hasNext ? departments.subList(0, limit) : departments;
+
+    long totalElements = (request.keyword() == null || request.keyword().trim().isEmpty())
+        ? departmentRepository.count()
+        : departmentRepository.countByKeyword(request.keyword());
+
+    if (contentEntities.isEmpty()) {
+      return new CursorPageResponseDepartmentDto(List.of(), null, 0L, limit, totalElements, false);
     }
 
-    // 검색된 부서가 없으면 빈 리스트 반환
-    if (departments.isEmpty()) {
-      return List.of();
-    }
-
-    List<Long> departmentIds = departments.stream()
-        .map(Department::getId)
-        .toList();
-
+    List<Long> departmentIds = contentEntities.stream().map(Department::getId).toList();
     List<Object[]> countResults = employeeRepository.countByDepartmentIds(departmentIds);
-
     Map<Long, Long> employeeCountMap = countResults.stream()
-        .collect(java.util.stream.Collectors.toMap(
+        .collect(Collectors.toMap(
             row -> (Long) row[0],
             row -> (Long) row[1]
         ));
 
-    return departments.stream()
+    List<DepartmentDto> content = contentEntities.stream()
         .map(dept -> {
           long employeeCount = employeeCountMap.getOrDefault(dept.getId(), 0L);
           return toDto(dept, employeeCount);
         })
         .toList();
+
+    long nextIdAfter = 0L;
+    String nextCursor = null;
+    if (hasNext) {
+      Department lastItem = contentEntities.get(contentEntities.size() - 1);
+      nextIdAfter = lastItem.getId();
+      nextCursor = String.valueOf(nextIdAfter);
+    }
+
+    return new CursorPageResponseDepartmentDto(
+        content, nextCursor, nextIdAfter, limit, totalElements, hasNext
+    );
   }
 
   @Override
