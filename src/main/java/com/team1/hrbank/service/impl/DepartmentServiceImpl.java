@@ -49,17 +49,17 @@ public class DepartmentServiceImpl implements DepartmentService {
   public DepartmentDto updateDepartment(Long id, DepartmentUpdateRequest request) {
     Department department = getDepartmentOrThrow(id);
 
-    if (request.newName() != null
-        && !request.newName().equals(department.getName())) {
-      if (departmentRepository.existsByName(request.newName())) {
+    if (request.name() != null
+        && !request.name().equals(department.getName())) {
+      if (departmentRepository.existsByName(request.name())) {
         throw new IllegalArgumentException("이미 존재하는 부서 이름입니다.");
       }
     }
 
     department.update(
-        request.newName(),
-        request.newDescription(),
-        request.newEstablishedDate()
+        request.name(),
+        request.description(),
+        request.establishedDate()
     );
 
     long employeeCount = employeeRepository.countByDepartmentId(department.getId());
