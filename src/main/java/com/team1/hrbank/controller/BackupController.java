@@ -1,19 +1,25 @@
 package com.team1.hrbank.controller;
 
+import com.team1.hrbank.dto.BackupDownloadDto;
 import com.team1.hrbank.dto.BackupDto;
 import com.team1.hrbank.dto.cursor.CursorPageResponseBackupDto;
-import com.team1.hrbank.entity.Backup;
 import com.team1.hrbank.entity.BackupStatus;
-import com.team1.hrbank.mapper.BackupMapper;
-import com.team1.hrbank.repository.BackupRepository;
 import com.team1.hrbank.service.BackupService;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+
 import jakarta.servlet.http.HttpServletRequest;
-import java.io.IOException;
-import java.time.Instant;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,12 +28,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.core.io.FileSystemResource;
-import org.springframework.core.io.Resource;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Instant;
 
 @Slf4j
 @RestController
@@ -35,6 +41,9 @@ import java.nio.file.Paths;
 @RequiredArgsConstructor
 @Tag(name = "Backup", description = "데이터 백업 API")
 public class BackupController {
+
+  @Value("${hrbank.backup.dir}")
+  private String backupDir;
 
   private final BackupService backupService;
 
@@ -80,24 +89,34 @@ public class BackupController {
   @Operation(summary = "백업 파일 다운로드")
   public ResponseEntity<Resource> download(@PathVariable Long id) throws IOException {
 
-    Backup backup = backupService.findById(id);
+    BackupDownloadDto downloadInfo = backupService.getDownloadInfo(id);
 
-    if (backup.getBackupFile() == null) {
+    if (downloadInfo == null) {
       return ResponseEntity.notFound().build();
     }
 
-    Path filePath = Paths.get(backup.getBackupFile().getFilePath());
-    Resource resource = new FileSystemResource(filePath);
+    // Path Traversal 방어
+    Path baseDir = Paths.get(backupDir).toAbsolutePath().normalize();
+    Path filePath = Paths.get(downloadInfo.filePath())
+        .toAbsolutePath().normalize();
 
+    if (!filePath.startsWith(baseDir)) {
+      log.warn("[Backup] Path traversal 시도 감지: {}", filePath);
+      return ResponseEntity.badRequest().build();
+    }
+
+    Resource resource = new FileSystemResource(filePath);
     if (!resource.exists()) {
       return ResponseEntity.notFound().build();
     }
 
     return ResponseEntity.ok()
         .header(HttpHeaders.CONTENT_DISPOSITION,
-            "attachment; filename=\"" + backup.getBackupFile().getFileName() + "\"")
-        .contentType(MediaType.parseMediaType(
-            backup.getBackupFile().getContentType()))
+            ContentDisposition.attachment()
+                .filename(downloadInfo.fileName(), StandardCharsets.UTF_8)
+                .build()
+                .toString())
+        .contentType(MediaType.parseMediaType(downloadInfo.contentType()))
         .body(resource);
   }
 
