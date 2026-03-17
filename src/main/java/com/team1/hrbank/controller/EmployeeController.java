@@ -11,6 +11,7 @@ import com.team1.hrbank.dto.request.EmployeeSearchRequest;
 import com.team1.hrbank.dto.request.EmployeeTrendRequestDto;
 import com.team1.hrbank.dto.request.EmployeeUpdateRequest;
 import com.team1.hrbank.service.EmployeeService;
+import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -56,21 +57,27 @@ public class EmployeeController {
   @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<EmployeeDto> createEmployee(
       @RequestPart("employee") EmployeeCreateRequest employeeCreateRequest,
-      @RequestPart(value = "profile", required = false) MultipartFile profileImage
+      @RequestPart(value = "profile", required = false) MultipartFile profileImage,
+      HttpServletRequest httpRequest
   ) throws IOException {
-    return ResponseEntity.status(HttpStatus.CREATED).body(employeeService.createEmployee(employeeCreateRequest, profileImage));
+    String ipAddress = httpRequest.getRemoteAddr();
+    return ResponseEntity.status(HttpStatus.CREATED)
+        .body(employeeService.createEmployee(employeeCreateRequest, profileImage, ipAddress));
   }
 
   @PatchMapping("/{id}")
   public EmployeeDto updateEmployee(@PathVariable long id,
       @RequestPart("employee") EmployeeUpdateRequest employeeUpdateRequest,
-      @RequestPart(required = false) MultipartFile profileImage) throws IOException {
-    return employeeService.updateEmployee(id, employeeUpdateRequest, profileImage);
+      @RequestPart(required = false) MultipartFile profileImage,
+      HttpServletRequest httpRequest) throws IOException {
+    String ipAddress = httpRequest.getRemoteAddr();
+    return employeeService.updateEmployee(id, employeeUpdateRequest, profileImage, ipAddress);
   }
 
   @DeleteMapping("/{id}")
-  public void deleteEmployee(@PathVariable long id) {
-    employeeService.deleteEmployee(id);
+  public void deleteEmployee(@PathVariable long id, HttpServletRequest httpRequest) {
+    String ipAddress = httpRequest.getRemoteAddr();
+    employeeService.deleteEmployee(id, ipAddress);
   }
 
   @GetMapping("/stats/trend")
