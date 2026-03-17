@@ -1,6 +1,7 @@
 package com.team1.hrbank.service;
 
 import com.team1.hrbank.dto.EmployeeDto;
+import com.team1.hrbank.dto.cursor.CursorPageResponseEmployeeDto;
 import com.team1.hrbank.dto.dashboard.EmployeeDistributionDto;
 import com.team1.hrbank.dto.dashboard.EmployeeTrendDto;
 import com.team1.hrbank.dto.request.EmployeeCreateRequest;
@@ -24,7 +25,7 @@ public interface EmployeeService {
 
   EmployeeDto findEmployee(Long id);
 
-  List<EmployeeDto> findAllEmployees(EmployeeSearchRequest request);
+  CursorPageResponseEmployeeDto findAllEmployees(EmployeeSearchRequest request);
 
   void deleteEmployee(Long id);
 

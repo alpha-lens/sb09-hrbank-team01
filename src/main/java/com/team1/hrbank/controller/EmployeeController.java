@@ -1,6 +1,7 @@
 package com.team1.hrbank.controller;
 
 import com.team1.hrbank.dto.EmployeeDto;
+import com.team1.hrbank.dto.cursor.CursorPageResponseEmployeeDto;
 import com.team1.hrbank.dto.dashboard.EmployeeDistributionDto;
 import com.team1.hrbank.dto.dashboard.EmployeeTrendDto;
 import com.team1.hrbank.dto.request.EmployeeCountRequestDto;
@@ -41,7 +42,7 @@ public class EmployeeController {
   private final EmployeeService employeeService;
 
   @GetMapping
-  public List<EmployeeDto> getEmployees(
+  public CursorPageResponseEmployeeDto getEmployees(
       @ModelAttribute EmployeeSearchRequest request
   ) {
     return employeeService.findAllEmployees(request);
@@ -54,7 +55,7 @@ public class EmployeeController {
 
   @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<EmployeeDto> createEmployee(
-      @RequestPart EmployeeCreateRequest employeeCreateRequest,
+      @RequestPart("employee") EmployeeCreateRequest employeeCreateRequest,
       @RequestPart(value = "profile", required = false) MultipartFile profileImage
   ) throws IOException {
     return ResponseEntity.status(HttpStatus.CREATED).body(employeeService.createEmployee(employeeCreateRequest, profileImage));
@@ -62,7 +63,7 @@ public class EmployeeController {
 
   @PatchMapping("/{id}")
   public EmployeeDto updateEmployee(@PathVariable long id,
-      @RequestPart EmployeeUpdateRequest employeeUpdateRequest,
+      @RequestPart("employee") EmployeeUpdateRequest employeeUpdateRequest,
       @RequestPart(required = false) MultipartFile profileImage) throws IOException {
     return employeeService.updateEmployee(id, employeeUpdateRequest, profileImage);
   }
