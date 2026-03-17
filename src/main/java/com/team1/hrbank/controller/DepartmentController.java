@@ -3,6 +3,7 @@ package com.team1.hrbank.controller;
 import com.team1.hrbank.dto.DepartmentDto;
 import com.team1.hrbank.dto.cursor.CursorPageResponseDepartmentDto;
 import com.team1.hrbank.dto.request.DepartmentCreateRequest;
+import com.team1.hrbank.dto.request.DepartmentSearchRequest;
 import com.team1.hrbank.dto.request.DepartmentUpdateRequest;
 import com.team1.hrbank.service.DepartmentService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -16,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -96,15 +98,9 @@ public class DepartmentController {
   })
   @GetMapping
   public ResponseEntity<CursorPageResponseDepartmentDto> findAllDepartments(
-      @Parameter(description = "부서 이름 또는 설명") @RequestParam(required = false) String nameOrDescription,
-      @Parameter(description = "이전 페이지 마지막 요소 ID") @RequestParam(required = false) Long idAfter,
-      @Parameter(description = "커서 (다음 페이지 시작점)") @RequestParam(required = false) String cursor,
-      @Parameter(description = "페이지 크기 (기본값: 10)") @RequestParam(required = false, defaultValue = "10") Integer size,
-      @Parameter(description = "정렬 필드 (name 또는 establishedDate)") @RequestParam(required = false, defaultValue = "establishedDate") String sortField,
-      @Parameter(description = "정렬 방향 (asc 또는 desc, 기본값: asc)") @RequestParam(required = false, defaultValue = "asc") String sortDirection
+      @ModelAttribute DepartmentSearchRequest request
   ) {
-    CursorPageResponseDepartmentDto response = departmentService.findAllDepartments(
-        nameOrDescription, idAfter, cursor, size, sortField, sortDirection);
+    CursorPageResponseDepartmentDto response = departmentService.findAllDepartments(request);
     return ResponseEntity.ok(response);
   }
 
