@@ -24,7 +24,7 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long>,
   Page<Employee> findAll(Specification<Employee> spec, Pageable pageable);
 
   @Query(value = "SELECT COUNT(*) FROM employees WHERE status = :status "
-                 + "AND created_at::date BETWEEN :fromDate AND :endDate", nativeQuery = true)
+                 + "AND hire_date::date BETWEEN :fromDate AND :endDate", nativeQuery = true)
   long findEmployeeCount(@Param("status") String status,
       @Param("fromDate") LocalDate fromDate, @Param("endDate") LocalDate endDate);
 

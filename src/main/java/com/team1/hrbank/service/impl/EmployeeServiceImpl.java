@@ -317,7 +317,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     if (startDate == null) {
-      startDate = endDate.minusWeeks(1);
+      startDate = LocalDate.EPOCH;
     }
     return employeeRepository.findEmployeeCount(status.name(), startDate, endDate);
   }
