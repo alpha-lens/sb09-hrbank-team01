@@ -6,9 +6,9 @@ import java.util.List;
 public record CursorPageResponseEmployeeDto(
     List<EmployeeDto> content,
     String nextCursor,
-    int nextIdAfter,
-    int size,
-    int totalElements,
+    Long nextIdAfter,
+    Integer size,
+    Long totalElements,
     boolean hasNext
 ) {
 
