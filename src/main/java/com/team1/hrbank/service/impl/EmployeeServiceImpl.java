@@ -1,6 +1,7 @@
 package com.team1.hrbank.service.impl;
 
 import com.team1.hrbank.dto.EmployeeDto;
+import com.team1.hrbank.dto.cursor.CursorPageResponseEmployeeDto;
 import com.team1.hrbank.dto.dashboard.EmployeeDistributionDto;
 import com.team1.hrbank.dto.dashboard.EmployeeTrendDto;
 import com.team1.hrbank.dto.request.EmployeeCreateRequest;
@@ -34,7 +35,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -110,13 +110,13 @@ public class EmployeeServiceImpl implements EmployeeService {
     Department department = departmentRepository.findById(request.departmentId())
         .orElseThrow(() -> new NoSuchElementException("해당 부서를 찾을 수 없습니다."));
     String employeeNumber = lastEmployeeNumber != null ?
-        generateEmployeeNumber(prefix,Integer.parseInt(lastEmployeeNumber.substring(7)))
+        generateEmployeeNumber(prefix, Integer.parseInt(lastEmployeeNumber.substring(7)))
         : generateEmployeeNumber(prefix, 1);
 
     Employee employee = Employee.of(employeeNumber, request.name(), request.email(), department,
         request.position());
 
-    if(profileImage != null && !profileImage.isEmpty()) {
+    if (profileImage != null && !profileImage.isEmpty()) {
       BinaryContent profile = saveProfileImage(profileImage);
       binaryContentRepository.save(profile);
       fileStorageService.save(profile.getId(), profileImage.getBytes());
@@ -128,7 +128,8 @@ public class EmployeeServiceImpl implements EmployeeService {
 
   @Override
   @Transactional
-  public EmployeeDto updateEmployee(Long id, EmployeeUpdateRequest request, MultipartFile profileImage)
+  public EmployeeDto updateEmployee(Long id, EmployeeUpdateRequest request,
+      MultipartFile profileImage)
       throws IOException {
     Employee employee = employeeRepository.findById(id)
         .orElseThrow(() -> new NoSuchElementException("해당 직원을 찾을 수 없습니다 : " + id));
@@ -144,7 +145,7 @@ public class EmployeeServiceImpl implements EmployeeService {
         request.status()
     );
 
-    if(profileImage != null && !profileImage.isEmpty()) {
+    if (profileImage != null && !profileImage.isEmpty()) {
       BinaryContent profile = saveProfileImage(profileImage);
       binaryContentRepository.save(profile);
       fileStorageService.save(profile.getId(), profileImage.getBytes());
@@ -159,33 +160,41 @@ public class EmployeeServiceImpl implements EmployeeService {
     return toDto(employeeRepository.findById(id)
         .orElseThrow(() -> new NoSuchElementException("해당 직원을 찾을 수 없습니다 : " + id)));
   }
+
   @Override
-  public List<EmployeeDto> findAllEmployees(EmployeeSearchRequest request) {
-    // 1. 클라이언트의 sortField를 엔티티 경로로 변환
-    String sortField = request.sortField();
-    if (sortField == null || sortField.isBlank()) {
-      sortField = "id"; // 기본값
-    } else if ("departmentName".equals(sortField)) {
-      // 부서 이름으로 정렬 요청이 오면 'department' 엔티티의 'name' 필드를 보도록 수정
-      sortField = "department.name";
-    }
+  public CursorPageResponseEmployeeDto findAllEmployees(EmployeeSearchRequest request) {
+    Pageable pageable = PageRequest.of(0, request.size() + 1, Sort.by(Sort.Direction.ASC, "id"));
 
-    Sort.Direction direction = "desc".equalsIgnoreCase(request.sortDirection())
-        ? Sort.Direction.DESC : Sort.Direction.ASC;
-
-    // 2. Pageable 객체 생성
-    Pageable pageable = PageRequest.of(0, request.size(), Sort.by(direction, sortField));
-
-    // 3. Specification과 Pageable을 함께 사용하여 조회
     Page<Employee> employeePage = employeeRepository.findAll(
         EmployeeSpecification.filterBy(request),
         pageable
     );
 
-    // 4. DTO로 변환하여 반환
-    return employeePage.getContent().stream()
-        .map(this::toDto)
-        .toList();
+    List<Employee> content = employeePage.getContent();
+
+    boolean hasNext = content.size() > request.size();
+    List<Employee> resultList = hasNext ? content.subList(0, request.size()) : content;
+
+    String nextCursor = null;
+    int nextIdAfter = 0;
+    if (!resultList.isEmpty()) {
+      Long lastId = resultList.get(resultList.size() - 1).getId();
+      nextCursor = String.valueOf(lastId);
+      nextIdAfter = lastId.intValue();
+    }
+
+    List<EmployeeDto> dtoList = resultList.stream().map(this::toDto).toList();
+
+    long totalElements = employeeRepository.count(EmployeeSpecification.filterBy(request));
+
+    return new CursorPageResponseEmployeeDto(
+        dtoList,
+        nextCursor,
+        nextIdAfter,
+        request.size(),
+        (int) totalElements,
+        hasNext
+    );
   }
 
   @Override
@@ -198,8 +207,9 @@ public class EmployeeServiceImpl implements EmployeeService {
     Long profileId = employeeRepository.findById(id).get().getProfileImage().getId();
 
     employeeRepository.deleteById(id);
-    if(fileStorageService.exists(id))
+    if (fileStorageService.exists(id)) {
       fileStorageService.delete(profileId);
+    }
   }
 
   @Override
@@ -254,9 +264,11 @@ public class EmployeeServiceImpl implements EmployeeService {
       EmployeeDistribution distribution, EmployeeStatus status) {
 
     List<DistributionMapping> rawData = null;
-    if(status == null) status = EmployeeStatus.ACTIVE;
+    if (status == null) {
+      status = EmployeeStatus.ACTIVE;
+    }
 
-    if(distribution == EmployeeDistribution.POSITION) {
+    if (distribution == EmployeeDistribution.POSITION) {
       rawData = employeeRepository.findDistributionByPosition(status.name());
     } else {
       rawData = employeeRepository.findDistributionByDepartment(status.name());
