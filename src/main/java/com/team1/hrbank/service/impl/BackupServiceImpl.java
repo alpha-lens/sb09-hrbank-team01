@@ -39,7 +39,6 @@ import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
-@Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class BackupServiceImpl implements BackupService {
 
@@ -80,8 +79,10 @@ public class BackupServiceImpl implements BackupService {
 
       // 성공 처리
       backup.complete(csvFile);
-      log.info("[Backup] 완료 id={}, file={}", backup.getId(), tempFilePath);
-      return backupMapper.toDto(backupRepository.save(backup));
+      log.info("[Backup] save 직전 status={}", backup.getStatus());
+      BackupDto result = backupMapper.toDto(backupRepository.save(backup));
+      log.info("[Backup] save 완료 id={}", backup.getId());
+      return result;
 
     } catch (Exception e) {
       log.error("[Backup] 실패 id={}", backup.getId(), e);
@@ -282,5 +283,13 @@ public class BackupServiceImpl implements BackupService {
         log.warn("[Backup] 임시 파일 삭제 실패: {}", filePath, e);
       }
     }
+  }
+  @Override
+  @Transactional(readOnly = true)
+  public BackupDto getLatest() {
+    return backupRepository
+        .findTopByStatusOrderByStartedAtDesc(BackupStatus.COMPLETED)
+        .map(backupMapper::toDto)
+        .orElse(null);
   }
 }

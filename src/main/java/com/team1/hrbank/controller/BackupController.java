@@ -3,6 +3,8 @@ package com.team1.hrbank.controller;
 import com.team1.hrbank.dto.BackupDto;
 import com.team1.hrbank.dto.cursor.CursorPageResponseBackupDto;
 import com.team1.hrbank.entity.BackupStatus;
+import com.team1.hrbank.mapper.BackupMapper;
+import com.team1.hrbank.repository.BackupRepository;
 import com.team1.hrbank.service.BackupService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -59,5 +61,11 @@ public class BackupController {
       return ip.split(",")[0].trim();
     }
     return request.getRemoteAddr();
+  }
+
+  @GetMapping("/latest")
+  @Operation(summary = "최신 백업 조회")
+  public ResponseEntity<BackupDto> getLatest() {
+    return ResponseEntity.ok(backupService.getLatest());
   }
 }

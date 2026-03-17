@@ -10,6 +10,8 @@ public interface BackupService {
   // 수동/자동 백업 실행
   BackupDto runBackup(String worker);
 
+  BackupDto getLatest();
+
   // 백업 이력 목록 조회
   CursorPageResponseBackupDto getList(
       String worker,
