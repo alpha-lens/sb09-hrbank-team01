@@ -25,6 +25,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class Employee extends BaseUpdatableEntity {
+
   @Column(length = 20, nullable = false, unique = true)
   private String employeeNumber;
   @Column(length = 50, nullable = false)
@@ -45,7 +46,8 @@ public class Employee extends BaseUpdatableEntity {
   @JoinColumn(name = "profile_image_id")
   private BinaryContent profileImage;
 
-  public static Employee of(String employeeNumber, String name, String email, Department department, String position) {
+  public static Employee of(String employeeNumber, String name, String email, Department department,
+      String position) {
     return Employee.builder()
         .employeeNumber(employeeNumber)
         .name(name)
@@ -57,13 +59,26 @@ public class Employee extends BaseUpdatableEntity {
         .build();
   }
 
-  public void update(String name, String email, Department department, String position, LocalDate hireDate, EmployeeStatus status) {
-    this.name = name;
-    this.email = email;
-    this.department = department;
-    this.position = position;
-    this.hireDate = hireDate;
-    this.status = status;
+  public void update(String name, String email, Department department, String position,
+      LocalDate hireDate, EmployeeStatus status) {
+    if (name != null) {
+      this.name = name;
+    }
+    if (email != null) {
+      this.email = email;
+    }
+    if (department != null) {
+      this.department = department;
+    }
+    if (position != null) {
+      this.position = position;
+    }
+    if (hireDate != null) {
+      this.hireDate = hireDate;
+    }
+    if (status != null) {
+      this.status = status;
+    }
   }
 
   public void updateProfileImage(BinaryContent profileImage) {

@@ -74,8 +74,7 @@ public class EmployeeServiceImpl implements EmployeeService {
       case DAY -> date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
       case MONTH -> date.format(DateTimeFormatter.ofPattern("yyyy-MM"));
       case YEAR -> date.format(DateTimeFormatter.ofPattern("yyyy"));
-      case QUARTER -> null;
-      case WEEK -> null;
+      case QUARTER, WEEK -> null;
     };
   }
 
@@ -84,8 +83,7 @@ public class EmployeeServiceImpl implements EmployeeService {
       case DAY -> date.plusDays(1);
       case MONTH -> date.plusMonths(1);
       case YEAR -> date.plusYears(1);
-      case QUARTER -> null;
-      case WEEK -> null;
+      case QUARTER, WEEK -> null;
     };
   }
 
@@ -134,8 +132,12 @@ public class EmployeeServiceImpl implements EmployeeService {
       throws IOException {
     Employee employee = employeeRepository.findById(id)
         .orElseThrow(() -> new NoSuchElementException("해당 직원을 찾을 수 없습니다 : " + id));
-    Department department = departmentRepository.findById(request.departmentId())
-        .orElseThrow(() -> new NoSuchElementException("해당 부서를 찾을 수 없습니다 : " + request.departmentId()));
+    Department department = null;
+    if (request.departmentId() != null) {
+      department = departmentRepository.findById(request.departmentId())
+          .orElseThrow(
+              () -> new NoSuchElementException("해당 부서를 찾을 수 없습니다 : " + request.departmentId()));
+    }
 
     employee.update(
         request.name(), request.email(), department, request.position(), request.hireDate(),
@@ -193,7 +195,11 @@ public class EmployeeServiceImpl implements EmployeeService {
       throw new NoSuchElementException("해당 직원을 찾을 수 없습니다: " + id);
     }
 
+    Long profileId = employeeRepository.findById(id).get().getProfileImage().getId();
+
     employeeRepository.deleteById(id);
+    if(fileStorageService.exists(id))
+      fileStorageService.delete(profileId);
   }
 
   @Override
@@ -247,10 +253,14 @@ public class EmployeeServiceImpl implements EmployeeService {
       LocalDate endDate,
       EmployeeDistribution distribution, EmployeeStatus status) {
 
-    List<DistributionMapping> rawData = switch (distribution) {
-      case DEPARTMENT -> employeeRepository.findDistributionByDepartment(status.name());
-      case POSITION -> employeeRepository.findDistributionByPosition(status.name());
-    };
+    List<DistributionMapping> rawData = null;
+    if(status == null) status = EmployeeStatus.ACTIVE;
+
+    if(distribution == EmployeeDistribution.POSITION) {
+      rawData = employeeRepository.findDistributionByPosition(status.name());
+    } else {
+      rawData = employeeRepository.findDistributionByDepartment(status.name());
+    }
 
     long totalCount = rawData.stream()
         .mapToLong(DistributionMapping::getCount)
@@ -276,6 +286,6 @@ public class EmployeeServiceImpl implements EmployeeService {
     if (startDate == null) {
       startDate = endDate.minusWeeks(1);
     }
-    return employeeRepository.findEmployeeCount(status, startDate, endDate);
+    return employeeRepository.findEmployeeCount(status.name(), startDate, endDate);
   }
 }

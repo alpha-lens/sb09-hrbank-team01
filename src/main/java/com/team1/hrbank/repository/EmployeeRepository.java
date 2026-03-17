@@ -22,14 +22,14 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long>,
 
   List<Employee> findAll();
 
-  @Query(value = "SELECT COUNT(*) FROM employee WHERE status = :status "
-                 + "AND created_at BETWEEN :startDate AND :endDate", nativeQuery = true)
-  long findEmployeeCount(@Param("status") EmployeeStatus status,
+  @Query(value = "SELECT COUNT(*) FROM employees WHERE status = :status "
+                 + "AND created_at::date BETWEEN :startDate AND :endDate", nativeQuery = true)
+  long findEmployeeCount(@Param("status") String status,
       @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
 
   @Query(value = """
       SELECT 
-          to_char(created_at, 
+          to_char(hire_date, 
               CASE 
                   WHEN :unit = 'DAY' THEN 'YYYY-MM-DD'
                   WHEN :unit = 'MONTH' THEN 'YYYY-MM'
@@ -39,7 +39,7 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long>,
           ) as period,
           COUNT(*)::int as count
       FROM employees
-      WHERE created_at BETWEEN :startDate AND :endDate
+      WHERE hire_date BETWEEN :startDate AND :endDate
       GROUP BY period
       ORDER BY period ASC
       """, nativeQuery = true)

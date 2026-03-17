@@ -45,8 +45,12 @@ public class EmployeeSpecification {
       }
 
       // 5. 입사일 (범위 조건: hireDateFrom <= hireDate <= hireDateTo)
-      if (request.hireDateFrom() != null && request.hireDateTo() != null) {
-        predicates.add(cb.between(root.get("hireDate"), request.hireDateFrom(), request.hireDateTo()));
+      if (request.hireDateFrom() != null) {
+        predicates.add(cb.greaterThanOrEqualTo(root.get("hireDate"), request.hireDateFrom()));
+      }
+
+      if (request.hireDateTo() != null) {
+        predicates.add(cb.lessThanOrEqualTo(root.get("hireDate"), request.hireDateTo()));
       }
 
       // 6. 상태 (완전 일치)
@@ -54,9 +58,15 @@ public class EmployeeSpecification {
         try {
           // String을 Enum으로 변환하여 완전 일치 비교
           predicates.add(cb.equal(root.get("status"), EmployeeStatus.valueOf(request.status())));
-        } catch (IllegalArgumentException ignored) {
-          // 잘못된 상태값이 들어올 경우 조건 무시 혹은 예외 처리
+        } catch (IllegalArgumentException e) {
+          throw new IllegalArgumentException("Invalid employee status: " + request.status());
         }
+      }
+
+      // 7. 커서 기반 페이징 (idAfter)
+      // asc -> id > idAfter
+      if(request.idAfter() != null) {
+        predicates.add(cb.gt(root.get("id"), request.idAfter()));
       }
 
       // 모든 리스트의 조건을 AND로 결합
