@@ -80,15 +80,15 @@ public class DepartmentServiceImpl implements DepartmentService {
     Pageable pageable = PageRequest.of(0, limit + 1);
 
     List<Department> departments = departmentRepository.findDepartmentsWithCursor(
-        request.keyword(), request.cursor(), pageable
+        request.nameOrDescription(), request.cursor(), pageable
     );
 
     boolean hasNext = departments.size() > limit;
     List<Department> contentEntities = hasNext ? departments.subList(0, limit) : departments;
 
-    long totalElements = (request.keyword() == null || request.keyword().trim().isEmpty())
+    long totalElements = (request.nameOrDescription() == null || request.nameOrDescription().trim().isEmpty())
         ? departmentRepository.count()
-        : departmentRepository.countByKeyword(request.keyword());
+        : departmentRepository.countByKeyword(request.nameOrDescription());
 
     if (contentEntities.isEmpty()) {
       return new CursorPageResponseDepartmentDto(List.of(), null, 0L, limit, totalElements, false);
