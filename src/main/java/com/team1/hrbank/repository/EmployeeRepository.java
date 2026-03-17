@@ -24,9 +24,9 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long>,
   Page<Employee> findAll(Specification<Employee> spec, Pageable pageable);
 
   @Query(value = "SELECT COUNT(*) FROM employees WHERE status = :status "
-                 + "AND created_at::date BETWEEN :startDate AND :endDate", nativeQuery = true)
+                 + "AND created_at::date BETWEEN :fromDate AND :endDate", nativeQuery = true)
   long findEmployeeCount(@Param("status") String status,
-      @Param("startDate") LocalDate startDate, @Param("endDate") LocalDate endDate);
+      @Param("fromDate") LocalDate fromDate, @Param("endDate") LocalDate endDate);
 
   @Query(value = """
       SELECT 
@@ -40,11 +40,11 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long>,
           ) as period,
           COUNT(*)::int as count
       FROM employees
-      WHERE hire_date BETWEEN :startDate AND :endDate
+      WHERE hire_date BETWEEN :fromDate AND :endDate
       GROUP BY period
       ORDER BY period ASC
       """, nativeQuery = true)
-  List<EmployeeTrendMapping> getTrendData(@Param("startDate") LocalDate startDate,
+  List<EmployeeTrendMapping> getTrendData(@Param("fromDate") LocalDate fromDate,
       @Param("endDate") LocalDate endDate, @Param("unit") String unit);
 
   @Query(value = """
