@@ -55,7 +55,7 @@ public class EmployeeController {
 
   @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<EmployeeDto> createEmployee(
-      @RequestPart EmployeeCreateRequest employeeCreateRequest,
+      @RequestPart("employee") EmployeeCreateRequest employeeCreateRequest,
       @RequestPart(value = "profile", required = false) MultipartFile profileImage
   ) throws IOException {
     return ResponseEntity.status(HttpStatus.CREATED).body(employeeService.createEmployee(employeeCreateRequest, profileImage));
@@ -63,7 +63,7 @@ public class EmployeeController {
 
   @PatchMapping("/{id}")
   public EmployeeDto updateEmployee(@PathVariable long id,
-      @RequestPart EmployeeUpdateRequest employeeUpdateRequest,
+      @RequestPart("employee") EmployeeUpdateRequest employeeUpdateRequest,
       @RequestPart(required = false) MultipartFile profileImage) throws IOException {
     return employeeService.updateEmployee(id, employeeUpdateRequest, profileImage);
   }
