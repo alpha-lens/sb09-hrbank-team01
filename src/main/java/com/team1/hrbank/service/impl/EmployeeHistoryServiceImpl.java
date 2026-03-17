@@ -91,15 +91,18 @@ public class EmployeeHistoryServiceImpl implements EmployeeHistoryService {
     Pageable pageable = PageRequest.of(0, request.size() + 1,
         Sort.by(direction, sortField));
 
+    String atFrom = (request.atFrom() == null || request.atFrom().isBlank()) ? null : request.atFrom();
+    String atTo   = (request.atTo()   == null || request.atTo().isBlank())   ? null : request.atTo();
+
     // 1 조회
     List<EmployeeHistory> histories =
         employeeHistoryRepository.findHistoriesWithConditions(
             request.employeeNumber(),
             request.memo(),
             request.ipAddress(),
-            request.type(),
-            request.atFrom(),
-            request.atTo(),
+            request.historyType(),
+            atFrom,
+            atTo,
             cursorId,
             pageable
         );
@@ -128,9 +131,9 @@ public class EmployeeHistoryServiceImpl implements EmployeeHistoryService {
         request.employeeNumber(),
         request.memo(),
         request.ipAddress(),
-        request.type(),
-        request.atFrom(),
-        request.atTo()
+        request.historyType(),
+        atFrom,
+        atTo
     );
 
     return new CursorPageResponseEmployeeHistoryDto(
