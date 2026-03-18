@@ -76,6 +76,7 @@ CREATE TABLE IF NOT EXISTS backups (
     ended_at    TIMESTAMP,                              -- 진행중이면 NULL
     status      VARCHAR(20)  NOT NULL DEFAULT 'IN_PROGRESS',
     file_id     BIGINT,                                 -- 완료/실패 시 파일 연결
+    last_history_id BIGINT,                              -- 백업 시점 마지막 이력 ID
 
     CONSTRAINT chk_backup_status CHECK (status IN ('IN_PROGRESS', 'COMPLETED', 'FAILED', 'SKIPPED')),
     CONSTRAINT fk_backup_file

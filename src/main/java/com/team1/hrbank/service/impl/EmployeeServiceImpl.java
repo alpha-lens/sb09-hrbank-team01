@@ -196,6 +196,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     boolean hasNext = content.size() > request.size();
     List<Employee> resultList = hasNext ? content.subList(0, request.size()) : content;
 
+    // BUG-4 수정: hasNext=true일 때만 nextCursor/nextIdAfter 설정
     String nextCursor = null;
     Long nextIdAfter = 0L;
 
@@ -334,6 +335,10 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     if (startDate == null) {
       startDate = LocalDate.EPOCH;
+    }
+
+    if (status == null) {
+      return employeeRepository.findEmployeeCountAll(startDate, endDate);
     }
     return employeeRepository.findEmployeeCount(status.name(), startDate, endDate);
   }

@@ -109,4 +109,49 @@ public class EmployeeSpecification {
       return cb.and(predicates.toArray(new Predicate[0]));
     };
   }
+
+  public static Specification<Employee> filterForCount(EmployeeSearchRequest request) {
+    return (root, query, cb) -> {
+      List<Predicate> predicates = new ArrayList<>();
+
+      if (StringUtils.hasText(request.nameOrEmail())) {
+        String pattern = "%" + request.nameOrEmail() + "%";
+        predicates.add(cb.or(
+            cb.like(root.get("name"), pattern),
+            cb.like(root.get("email"), pattern)
+        ));
+      }
+
+      if (StringUtils.hasText(request.departmentName())) {
+        predicates.add(cb.like(root.join("department").get("name"), "%" + request.departmentName() + "%"));
+      }
+
+      if (StringUtils.hasText(request.position())) {
+        predicates.add(cb.like(root.get("position"), "%" + request.position() + "%"));
+      }
+
+      if (StringUtils.hasText(request.employeeNumber())) {
+        predicates.add(cb.like(root.get("employeeNumber"), "%" + request.employeeNumber() + "%"));
+      }
+
+      if (request.hireDateFrom() != null) {
+        predicates.add(cb.greaterThanOrEqualTo(root.get("hireDate"), request.hireDateFrom()));
+      }
+
+      if (request.hireDateTo() != null) {
+        predicates.add(cb.lessThanOrEqualTo(root.get("hireDate"), request.hireDateTo()));
+      }
+
+      if (StringUtils.hasText(request.status())) {
+        try {
+          predicates.add(cb.equal(root.get("status"), EmployeeStatus.valueOf(request.status())));
+        } catch (IllegalArgumentException e) {
+          throw new IllegalArgumentException("Invalid employee status: " + request.status());
+        }
+      }
+
+      // 커서 조건 제외 (totalElements 카운트용)
+      return cb.and(predicates.toArray(new Predicate[0]));
+    };
+  }
 }

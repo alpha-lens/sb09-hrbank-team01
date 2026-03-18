@@ -1,13 +1,12 @@
 package com.team1.hrbank.dto.request;
 
-import com.team1.hrbank.entity.HistoryType;
 import java.time.Instant;
 import lombok.Builder;
 
 @Builder
 public record EmployeeHistorySearchRequest(
     String employeeNumber,
-    HistoryType type,
+    String type,
     String memo,
     String ipAddress,
     Instant atFrom,

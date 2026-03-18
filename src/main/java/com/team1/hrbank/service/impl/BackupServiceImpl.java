@@ -11,6 +11,7 @@ import com.team1.hrbank.entity.Employee;
 import com.team1.hrbank.mapper.BackupMapper;
 import com.team1.hrbank.repository.BackupRepository;
 import com.team1.hrbank.repository.BinaryContentRepository;
+import com.team1.hrbank.repository.EmployeeHistoryRepository;
 import com.team1.hrbank.repository.EmployeeRepository;
 import com.team1.hrbank.repository.specification.BackupSpecification;
 import com.team1.hrbank.service.BackupService;
@@ -61,6 +62,7 @@ public class BackupServiceImpl implements BackupService {
   private final EmployeeRepository employeeRepository;
   private final BinaryContentRepository binaryContentRepository;
   private final BackupMapper backupMapper;
+  private final EmployeeHistoryRepository employeeHistoryRepository;
 
   @Value("${backup.dir:./backups}")
   private String backupDir;
@@ -93,8 +95,9 @@ public class BackupServiceImpl implements BackupService {
       // BinaryContent 저장
       BinaryContent csvFile = saveBinaryContent(tempFilePath, "text/csv");
 
-      // 성공 처리
-      backup.complete(csvFile);
+      // 성공 처리: 현재 시점의 마지막 이력 ID 기록
+      Long maxHistoryId = employeeHistoryRepository.findMaxId().orElse(0L);
+      backup.complete(csvFile, maxHistoryId);
       BackupDto result = backupMapper.toDto(backupRepository.save(backup));
       log.info("[Backup] 완료 id={}, file={}", backup.getId(), tempFilePath);
       return result;
@@ -175,15 +178,19 @@ public class BackupServiceImpl implements BackupService {
     );
   }
 
-  // 백업 필요 여부 판단
+  // 백업 필요 여부 판단: 마지막 완료 백업 이후 새로운 직원 변경 이력이 있는지 ID로 비교
   private boolean isBackupNeeded() {
     Optional<Backup> lastCompleted = backupRepository
         .findTopByStatusOrderByStartedAtDesc(BackupStatus.COMPLETED);
 
     if (lastCompleted.isEmpty()) return true;
 
-    Instant lastBackupTime = lastCompleted.get().getStartedAt();
-    return employeeRepository.existsByUpdatedAtAfter(lastBackupTime);
+    Long savedHistoryId = lastCompleted.get().getLastHistoryId();
+    if (savedHistoryId == null) savedHistoryId = 0L;
+
+    Long currentMaxHistoryId = employeeHistoryRepository.findMaxId().orElse(0L);
+
+    return currentMaxHistoryId > savedHistoryId;
   }
 
   // IN_PROGRESS 저장
