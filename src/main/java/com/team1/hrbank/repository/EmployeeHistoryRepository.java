@@ -36,8 +36,8 @@ public interface EmployeeHistoryRepository extends JpaRepository<EmployeeHistory
       @Param("memo") String memo,
       @Param("ipAddress") String ipAddress,
       @Param("type") HistoryType type,
-      @Param("atFrom") String atFrom,
-      @Param("atTo") String atTo,
+      @Param("atFrom") Instant atFrom,
+      @Param("atTo") Instant atTo,
       @Param("idBefore") Long idBefore,
       Pageable pageable
   );
@@ -64,8 +64,8 @@ public interface EmployeeHistoryRepository extends JpaRepository<EmployeeHistory
       @Param("memo") String memo,
       @Param("ipAddress") String ipAddress,
       @Param("type") HistoryType type,
-      @Param("atFrom") String atFrom,
-      @Param("atTo") String atTo
+      @Param("atFrom") Instant atFrom,
+      @Param("atTo") Instant atTo
   );
 
 }
