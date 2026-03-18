@@ -1,8 +1,8 @@
 package com.team1.hrbank.service.impl;
 
 import com.team1.hrbank.dto.DiffDto;
+import com.team1.hrbank.dto.CursorPageResponse;
 import com.team1.hrbank.dto.EmployeeDto;
-import com.team1.hrbank.dto.cursor.CursorPageResponseEmployeeDto;
 import com.team1.hrbank.dto.dashboard.EmployeeDistributionDto;
 import com.team1.hrbank.dto.dashboard.EmployeeTrendDto;
 import com.team1.hrbank.dto.request.EmployeeCreateRequest;
@@ -37,13 +37,13 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 @Service
@@ -105,6 +105,36 @@ public class EmployeeServiceImpl implements EmployeeService {
     };
   }
 
+  private List<DiffDto> buildDiffs(Employee before, EmployeeUpdateRequest request) {
+    List<DiffDto> diffs = new ArrayList<>();
+    if (request.name() != null && !request.name().equals(before.getName())) {
+      diffs.add(new DiffDto("name", before.getName(), request.name()));
+    }
+    if (request.email() != null && !request.email().equals(before.getEmail())) {
+      diffs.add(new DiffDto("email", before.getEmail(), request.email()));
+    }
+    if (request.departmentId() != null && !request.departmentId().equals(before.getDepartment().getId())) {
+      diffs.add(new DiffDto("departmentId",
+          String.valueOf(before.getDepartment().getId()),
+          String.valueOf(request.departmentId())));
+    }
+    if (request.position() != null && !request.position().equals(before.getPosition())) {
+      diffs.add(new DiffDto("position", before.getPosition(), request.position()));
+    }
+    if (request.hireDate() != null && !request.hireDate().equals(before.getHireDate())) {
+      diffs.add(new DiffDto("hireDate",
+          before.getHireDate().toString(),
+          request.hireDate().toString()));
+    }
+    if (request.status() != null && !request.status().equals(before.getStatus())) {
+      diffs.add(new DiffDto("status",
+          before.getStatus().name(),
+          request.status().name()));
+    }
+    return diffs;
+  }
+
+
   private BinaryContent saveProfileImage(MultipartFile profileImage) {
     String fileName = profileImage.getOriginalFilename();
     String contentType = profileImage.getContentType();
@@ -157,24 +187,14 @@ public class EmployeeServiceImpl implements EmployeeService {
       employee.updateProfileImage(profile);
     }
 
-    Employee saved = employeeRepository.save(employee);
+    EmployeeDto saved = toDto(employeeRepository.save(employee));
 
-    // 변경 이력 자동 생성
-    List<DiffDto> diffs = List.of(
-        new DiffDto("employeeNumber", "", saved.getEmployeeNumber()),
-        new DiffDto("name", "", saved.getName()),
-        new DiffDto("email", "", saved.getEmail()),
-        new DiffDto("department", "", department.getName()),
-        new DiffDto("position", "", saved.getPosition()),
-        new DiffDto("hireDate", "", saved.getHireDate().toString()),
-        new DiffDto("status", "", saved.getStatus().name())
-    );
     employeeHistoryService.createEmployeeHistory(
-        new EmployeeHistoryCreateRequest(HistoryType.CREATED, saved.getEmployeeNumber(), diffs, request.memo()),
+        new EmployeeHistoryCreateRequest(HistoryType.CREATED, saved.employeeNumber(), List.of(), null),
         ipAddress
     );
 
-    return toDto(saved);
+    return saved;
   }
 
   @Override
@@ -201,6 +221,8 @@ public class EmployeeServiceImpl implements EmployeeService {
               () -> new NoSuchElementException("해당 부서를 찾을 수 없습니다 : " + request.departmentId()));
     }
 
+    List<DiffDto> diffs = buildDiffs(employee,request);
+
     employee.update(
         request.name(), request.email(), department, request.position(), request.hireDate(),
         request.status()
@@ -218,33 +240,10 @@ public class EmployeeServiceImpl implements EmployeeService {
       employee.updateProfileImage(profile);
     }
 
-    // 변경 이력 자동 생성
-    List<DiffDto> diffs = new ArrayList<>();
-    if (request.name() != null && !request.name().equals(beforeName)) {
-      diffs.add(new DiffDto("name", beforeName, request.name()));
-    }
-    if (request.email() != null && !request.email().equals(beforeEmail)) {
-      diffs.add(new DiffDto("email", beforeEmail, request.email()));
-    }
-    if (request.departmentId() != null && !request.departmentId().equals(beforeDepartmentId)) {
-      diffs.add(new DiffDto("department", beforeDepartmentName, employee.getDepartment().getName()));
-    }
-    if (request.position() != null && !request.position().equals(beforePosition)) {
-      diffs.add(new DiffDto("position", beforePosition, request.position()));
-    }
-    if (request.hireDate() != null && !request.hireDate().toString().equals(beforeHireDate)) {
-      diffs.add(new DiffDto("hireDate", beforeHireDate, request.hireDate().toString()));
-    }
-    if (request.status() != null && !request.status().name().equals(beforeStatus)) {
-      diffs.add(new DiffDto("status", beforeStatus, request.status().name()));
-    }
-
-    if (!diffs.isEmpty()) {
-      employeeHistoryService.createEmployeeHistory(
-          new EmployeeHistoryCreateRequest(HistoryType.UPDATED, employee.getEmployeeNumber(), diffs, request.memo()),
-          ipAddress
-      );
-    }
+    employeeHistoryService.createEmployeeHistory(
+        new EmployeeHistoryCreateRequest(HistoryType.UPDATED, employee.getEmployeeNumber(), diffs, null),
+        ipAddress
+    );
 
     return toDto(employee);
   }
@@ -256,43 +255,47 @@ public class EmployeeServiceImpl implements EmployeeService {
   }
 
   @Override
-  public CursorPageResponseEmployeeDto findAllEmployees(EmployeeSearchRequest request) {
-    // BUG-3 수정: sortField/sortDirection 적용 (기본값: id ASC)
-    String sortField = (request.sortField() != null && !request.sortField().isBlank())
-        ? request.sortField() : "id";
-    Direction direction = "desc".equalsIgnoreCase(request.sortDirection())
-        ? Direction.DESC : Direction.ASC;
-    Sort sort = Sort.by(direction, sortField);
-    if (!"id".equals(sortField)) {
-      sort = sort.and(Sort.by(direction, "id"));
-    }
+  public CursorPageResponse findAllEmployees(EmployeeSearchRequest request) {
+    String sortField = StringUtils.hasText(request.sortField()) ? request.sortField() : "id";
+    Direction direction = request.sortDirection().equalsIgnoreCase("DESC") ? Direction.DESC : Direction.ASC;
+    Sort sort = Sort.by(direction, sortField).and(Sort.by(direction, "id"));
+
     Pageable pageable = PageRequest.of(0, request.size() + 1, sort);
 
-    Page<Employee> employeePage = employeeRepository.findAll(
+    // 2. 실제 데이터 조회 (카운트 쿼리도 함께 발생하지만 idAfter 조건은 무시되도록 Specification에 설정됨)
+    List<Employee> content = employeeRepository.findAll(
         EmployeeSpecification.filterBy(request),
         pageable
-    );
+    ).getContent();
 
-    List<Employee> content = employeePage.getContent();
-
+    // 3. 다음 페이지 존재 여부 확인 및 데이터 자르기
     boolean hasNext = content.size() > request.size();
     List<Employee> resultList = hasNext ? content.subList(0, request.size()) : content;
 
     // BUG-4 수정: hasNext=true일 때만 nextCursor/nextIdAfter 설정
     String nextCursor = null;
-    Long nextIdAfter = null;
-    if (hasNext && !resultList.isEmpty()) {
-      Long lastId = resultList.get(resultList.size() - 1).getId();
-      nextCursor = String.valueOf(lastId);
-      nextIdAfter = lastId;
+    Long nextIdAfter = 0L;
+
+    if (!resultList.isEmpty()) {
+      Employee lastEmp = resultList.get(resultList.size() - 1);
+      nextIdAfter = lastEmp.getId();
+
+      // 정렬 필드에 따라 cursor에 담을 값 결정
+      nextCursor = switch (sortField) {
+        case "name" -> lastEmp.getName() + "_" + nextIdAfter;
+        case "hireDate" -> lastEmp.getHireDate().toString() + "_" + nextIdAfter;
+        case "position" -> lastEmp.getPosition() + "_" + nextIdAfter;
+        case "employeeNumber" -> lastEmp.getEmployeeNumber() + "_" + nextIdAfter;
+        default -> String.valueOf(lastEmp.getId());
+      };
     }
 
     List<EmployeeDto> dtoList = resultList.stream().map(this::toDto).toList();
 
-    // BUG-2 수정: 커서 조건 제외한 카운트 (전체 검색 결과 수)
-    long totalElements = employeeRepository.count(EmployeeSpecification.filterForCount(request));
+    // 4. 전체 데이터 수 조회 (커서 조건 없이 순수 검색 조건으로만 카운트)
+    long totalElements = employeeRepository.count(EmployeeSpecification.filterBy(request));
 
-    return new CursorPageResponseEmployeeDto(
+    return new CursorPageResponse(
         dtoList,
         nextCursor,
         nextIdAfter,
@@ -304,32 +307,24 @@ public class EmployeeServiceImpl implements EmployeeService {
 
   @Override
   @Transactional
-  public void deleteEmployee(Long id, String ipAddress) {
+  public void deleteEmployee(Long id) {
     Employee employee = employeeRepository.findById(id)
         .orElseThrow(() -> new NoSuchElementException("해당 직원을 찾을 수 없습니다: " + id));
 
-    // 삭제 전 이력 생성
-    List<DiffDto> diffs = List.of(
-        new DiffDto("employeeNumber", employee.getEmployeeNumber(), ""),
-        new DiffDto("name", employee.getName(), ""),
-        new DiffDto("email", employee.getEmail(), ""),
-        new DiffDto("department", employee.getDepartment().getName(), ""),
-        new DiffDto("position", employee.getPosition(), ""),
-        new DiffDto("hireDate", employee.getHireDate().toString(), ""),
-        new DiffDto("status", employee.getStatus().name(), "")
-    );
-    employeeHistoryService.createEmployeeHistory(
-        new EmployeeHistoryCreateRequest(HistoryType.DELETED, employee.getEmployeeNumber(), diffs, null),
-        ipAddress
-    );
+    Long profileId = (employee.getProfileImage() != null) ?
+        employee.getProfileImage().getId() : null;
+    employeeRepository.delete(employee);
 
-    Long profileImageId = employee.getProfileImage() != null ? employee.getProfileImage().getId() : null;
+    if (profileId != null && fileStorageService.exists(profileId)) {
+      fileStorageService.delete(profileId);
+    }
 
     employeeRepository.delete(employee);
 
-    if (profileImageId != null && fileStorageService.exists(profileImageId)) {
-      fileStorageService.delete(profileImageId);
-    }
+    employeeHistoryService.createEmployeeHistory(
+        new EmployeeHistoryCreateRequest(HistoryType.DELETED, empNumber, List.of(), null),
+        ipAddress
+    );
   }
 
   @Override

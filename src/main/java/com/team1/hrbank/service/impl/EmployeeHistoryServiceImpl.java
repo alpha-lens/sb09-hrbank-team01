@@ -32,7 +32,6 @@ public class EmployeeHistoryServiceImpl implements EmployeeHistoryService {
 
   private final EmployeeHistoryRepository employeeHistoryRepository;
   private final EmployeeHistoryMapper employeeHistoryMapper;
-  @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
   private final ObjectMapper objectMapper;
 
   @Override
