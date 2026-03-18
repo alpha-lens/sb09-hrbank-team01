@@ -180,7 +180,16 @@ public class EmployeeServiceImpl implements EmployeeService {
 
   @Override
   public CursorPageResponseEmployeeDto findAllEmployees(EmployeeSearchRequest request) {
-    Pageable pageable = PageRequest.of(0, request.size() + 1, Sort.by(Direction.ASC, "id"));
+    // BUG-3 수정: sortField/sortDirection 적용 (기본값: id ASC)
+    String sortField = (request.sortField() != null && !request.sortField().isBlank())
+        ? request.sortField() : "id";
+    Direction direction = "desc".equalsIgnoreCase(request.sortDirection())
+        ? Direction.DESC : Direction.ASC;
+    Sort sort = Sort.by(direction, sortField);
+    if (!"id".equals(sortField)) {
+      sort = sort.and(Sort.by(direction, "id"));
+    }
+    Pageable pageable = PageRequest.of(0, request.size() + 1, sort);
 
     Page<Employee> employeePage = employeeRepository.findAll(
         EmployeeSpecification.filterBy(request),
@@ -192,9 +201,10 @@ public class EmployeeServiceImpl implements EmployeeService {
     boolean hasNext = content.size() > request.size();
     List<Employee> resultList = hasNext ? content.subList(0, request.size()) : content;
 
+    // BUG-4 수정: hasNext=true일 때만 nextCursor/nextIdAfter 설정
     String nextCursor = null;
-    Long nextIdAfter = 0L;
-    if (!resultList.isEmpty()) {
+    Long nextIdAfter = null;
+    if (hasNext && !resultList.isEmpty()) {
       Long lastId = resultList.get(resultList.size() - 1).getId();
       nextCursor = String.valueOf(lastId);
       nextIdAfter = lastId;
@@ -202,7 +212,8 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     List<EmployeeDto> dtoList = resultList.stream().map(this::toDto).toList();
 
-    long totalElements = employeeRepository.count(EmployeeSpecification.filterBy(request));
+    // BUG-2 수정: 커서 조건 제외한 카운트 (전체 검색 결과 수)
+    long totalElements = employeeRepository.count(EmployeeSpecification.filterForCount(request));
 
     return new CursorPageResponseEmployeeDto(
         dtoList,
@@ -323,6 +334,10 @@ public class EmployeeServiceImpl implements EmployeeService {
 
     if (startDate == null) {
       startDate = LocalDate.EPOCH;
+    }
+
+    if (status == null) {
+      return employeeRepository.findEmployeeCountAll(startDate, endDate);
     }
     return employeeRepository.findEmployeeCount(status.name(), startDate, endDate);
   }

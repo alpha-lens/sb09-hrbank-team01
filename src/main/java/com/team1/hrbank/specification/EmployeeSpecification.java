@@ -63,13 +63,61 @@ public class EmployeeSpecification {
         }
       }
 
-      // 7. 커서 기반 페이징 (idAfter)
-      // asc -> id > idAfter
+      // 7. 커서 기반 페이징 (idAfter) - 정렬 방향에 따라 조건 변경
       if (request.idAfter() != null && request.idAfter() > 0) {
-        predicates.add(cb.gt(root.get("id"), request.idAfter()));
+        if ("desc".equalsIgnoreCase(request.sortDirection())) {
+          predicates.add(cb.lt(root.get("id"), request.idAfter()));
+        } else {
+          predicates.add(cb.gt(root.get("id"), request.idAfter()));
+        }
       }
 
       // 모든 리스트의 조건을 AND로 결합
+      return cb.and(predicates.toArray(new Predicate[0]));
+    };
+  }
+
+  public static Specification<Employee> filterForCount(EmployeeSearchRequest request) {
+    return (root, query, cb) -> {
+      List<Predicate> predicates = new ArrayList<>();
+
+      if (StringUtils.hasText(request.nameOrEmail())) {
+        String pattern = "%" + request.nameOrEmail() + "%";
+        predicates.add(cb.or(
+            cb.like(root.get("name"), pattern),
+            cb.like(root.get("email"), pattern)
+        ));
+      }
+
+      if (StringUtils.hasText(request.departmentName())) {
+        predicates.add(cb.like(root.join("department").get("name"), "%" + request.departmentName() + "%"));
+      }
+
+      if (StringUtils.hasText(request.position())) {
+        predicates.add(cb.like(root.get("position"), "%" + request.position() + "%"));
+      }
+
+      if (StringUtils.hasText(request.employeeNumber())) {
+        predicates.add(cb.like(root.get("employeeNumber"), "%" + request.employeeNumber() + "%"));
+      }
+
+      if (request.hireDateFrom() != null) {
+        predicates.add(cb.greaterThanOrEqualTo(root.get("hireDate"), request.hireDateFrom()));
+      }
+
+      if (request.hireDateTo() != null) {
+        predicates.add(cb.lessThanOrEqualTo(root.get("hireDate"), request.hireDateTo()));
+      }
+
+      if (StringUtils.hasText(request.status())) {
+        try {
+          predicates.add(cb.equal(root.get("status"), EmployeeStatus.valueOf(request.status())));
+        } catch (IllegalArgumentException e) {
+          throw new IllegalArgumentException("Invalid employee status: " + request.status());
+        }
+      }
+
+      // 커서 조건 제외 (totalElements 카운트용)
       return cb.and(predicates.toArray(new Predicate[0]));
     };
   }
