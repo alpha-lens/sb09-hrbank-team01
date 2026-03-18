@@ -44,6 +44,9 @@ public class Backup {  // ① id, createdAt 상속
   @JoinColumn(name = "file_id")
   private BinaryContent backupFile;
 
+  @Column(name = "last_history_id")
+  private Long lastHistoryId;
+
   /* ── 팩토리 메서드 ─────────────────────────── */
 
   public static Backup startNew(String worker) {
@@ -62,10 +65,11 @@ public class Backup {  // ① id, createdAt 상속
 
   /* ── 상태 전이 메서드 ──────────────────────── */
 
-  public void complete(BinaryContent file) {
-    this.status     = BackupStatus.COMPLETED;
-    this.endedAt    = Instant.now();
-    this.backupFile = file;
+  public void complete(BinaryContent file, Long lastHistoryId) {
+    this.status        = BackupStatus.COMPLETED;
+    this.endedAt       = Instant.now();
+    this.backupFile    = file;
+    this.lastHistoryId = lastHistoryId;
   }
 
   public void fail(BinaryContent errorLog) {
