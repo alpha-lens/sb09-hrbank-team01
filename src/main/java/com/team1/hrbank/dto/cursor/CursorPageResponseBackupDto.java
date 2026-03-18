@@ -6,7 +6,7 @@ import java.util.List;
 public record CursorPageResponseBackupDto(
     List<BackupDto> content,
     String nextCursor,
-    long nextIdAfter,
+    Long nextIdAfter,
     int size,
     long totalElements,
     boolean hasNext
