@@ -1,5 +1,6 @@
 package com.team1.hrbank.controller;
 
+import com.team1.hrbank.dto.CursorPageResponse;
 import com.team1.hrbank.dto.EmployeeDto;
 import com.team1.hrbank.dto.cursor.CursorPageResponseEmployeeDto;
 import com.team1.hrbank.dto.dashboard.EmployeeDistributionDto;
@@ -35,7 +36,7 @@ public class EmployeeController {
   private final EmployeeService employeeService;
 
   @GetMapping
-  public CursorPageResponseEmployeeDto getEmployees(
+  public CursorPageResponse getEmployees(
       @ModelAttribute EmployeeSearchRequest request
   ) {
     return employeeService.findAllEmployees(request);
