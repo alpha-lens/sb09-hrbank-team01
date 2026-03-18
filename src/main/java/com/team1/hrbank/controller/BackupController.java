@@ -19,6 +19,7 @@ import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.StringUtils;
@@ -49,11 +50,16 @@ public class BackupController {
 
   /* ── 수동 백업 실행 ───────────────────────────────────── */
   @PostMapping
-  @Operation(summary = "수동 백업 실행", description = "요청자 IP를 worker로 백업을 즉시 실행합니다.")
-  public ResponseEntity<BackupDto> runBackup(HttpServletRequest request) {
+  public ResponseEntity<?> runBackup(HttpServletRequest request) {
     String clientIp = resolveClientIp(request);
     log.info("[Backup] 수동 백업 요청 ip={}", clientIp);
-    return ResponseEntity.ok(backupService.runBackup(clientIp));
+    try {
+      return ResponseEntity.ok(backupService.runBackup(clientIp));
+    } catch (IllegalStateException e) {
+      return ResponseEntity
+          .status(HttpStatus.CONFLICT)  // 409
+          .body(e.getMessage());
+    }
   }
 
   /* ── 백업 이력 목록 조회 ──────────────────────────────── */
@@ -87,37 +93,41 @@ public class BackupController {
 
   @GetMapping("/{id}/download")
   @Operation(summary = "백업 파일 다운로드")
-  public ResponseEntity<Resource> download(@PathVariable Long id) throws IOException {
-
+  public ResponseEntity<Resource> download(@PathVariable Long id) {
     BackupDownloadDto downloadInfo = backupService.getDownloadInfo(id);
 
     if (downloadInfo == null) {
       return ResponseEntity.notFound().build();
     }
 
-    // Path Traversal 방어
-    Path baseDir = Paths.get(backupDir).toAbsolutePath().normalize();
-    Path filePath = Paths.get(downloadInfo.filePath())
-        .toAbsolutePath().normalize();
+    try {
+      Path baseDir = Paths.get(backupDir).toAbsolutePath().normalize();
+      Path filePath = Paths.get(downloadInfo.filePath())
+          .toAbsolutePath().normalize();
 
-    if (!filePath.startsWith(baseDir)) {
-      log.warn("[Backup] Path traversal 시도 감지: {}", filePath);
-      return ResponseEntity.badRequest().build();
+      if (!filePath.startsWith(baseDir)) {
+        log.warn("[Backup] Path traversal 시도 감지: {}", filePath);
+        return ResponseEntity.badRequest().build();
+      }
+
+      Resource resource = new FileSystemResource(filePath);
+      if (!resource.exists()) {
+        return ResponseEntity.notFound().build();
+      }
+
+      return ResponseEntity.ok()
+          .header(HttpHeaders.CONTENT_DISPOSITION,
+              ContentDisposition.attachment()
+                  .filename(downloadInfo.fileName(), StandardCharsets.UTF_8)
+                  .build()
+                  .toString())
+          .contentType(MediaType.parseMediaType(downloadInfo.contentType()))
+          .body(resource);
+
+    } catch (Exception e) {
+      log.error("[Backup] 파일 다운로드 실패 id={}", id, e);
+      return ResponseEntity.internalServerError().build();
     }
-
-    Resource resource = new FileSystemResource(filePath);
-    if (!resource.exists()) {
-      return ResponseEntity.notFound().build();
-    }
-
-    return ResponseEntity.ok()
-        .header(HttpHeaders.CONTENT_DISPOSITION,
-            ContentDisposition.attachment()
-                .filename(downloadInfo.fileName(), StandardCharsets.UTF_8)
-                .build()
-                .toString())
-        .contentType(MediaType.parseMediaType(downloadInfo.contentType()))
-        .body(resource);
   }
 
   @GetMapping("/latest")

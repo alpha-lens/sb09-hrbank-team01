@@ -280,22 +280,27 @@ public class EmployeeServiceImpl implements EmployeeService {
 
   @Override
   @Transactional
-  public void deleteEmployee(Long id) {
+  public void deleteEmployee(Long id, String ipAddress) {  // ipAddress 파라미터 추가
     Employee employee = employeeRepository.findById(id)
         .orElseThrow(() -> new NoSuchElementException("해당 직원을 찾을 수 없습니다: " + id));
 
+    String empNumber = employee.getEmployeeNumber();  // 삭제 전에 미리 저장
+
     Long profileId = (employee.getProfileImage() != null) ?
         employee.getProfileImage().getId() : null;
-    employeeRepository.delete(employee);
+
+    employeeRepository.delete(employee);  // 1번만 삭제
 
     if (profileId != null && fileStorageService.exists(profileId)) {
       fileStorageService.delete(profileId);
     }
 
-    employeeRepository.delete(employee);
-
     employeeHistoryService.createEmployeeHistory(
-        new EmployeeHistoryCreateRequest(HistoryType.DELETED, empNumber, List.of(), null),
+        new EmployeeHistoryCreateRequest(
+            HistoryType.DELETED,
+            empNumber,   // 미리 저장한 사번 사용
+            List.of(),
+            null),
         ipAddress
     );
   }
