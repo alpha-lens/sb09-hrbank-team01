@@ -1,7 +1,7 @@
 package com.team1.hrbank.controller;
 
+import com.team1.hrbank.dto.cursor.CursorPageResponse;
 import com.team1.hrbank.dto.DepartmentDto;
-import com.team1.hrbank.dto.cursor.CursorPageResponseDepartmentDto;
 import com.team1.hrbank.dto.request.DepartmentCreateRequest;
 import com.team1.hrbank.dto.request.DepartmentSearchRequest;
 import com.team1.hrbank.dto.request.DepartmentUpdateRequest;
@@ -97,10 +97,10 @@ public class DepartmentController {
           content = @Content(schema = @Schema(implementation = com.team1.hrbank.global.GlobalExceptionHandler.ErrorResponse.class)))
   })
   @GetMapping
-  public ResponseEntity<CursorPageResponseDepartmentDto> findAllDepartments(
+  public ResponseEntity<CursorPageResponse<DepartmentDto>> findAllDepartments(
       @ModelAttribute DepartmentSearchRequest request
   ) {
-    CursorPageResponseDepartmentDto response = departmentService.findAllDepartments(request);
+    CursorPageResponse<DepartmentDto> response = departmentService.findAllDepartments(request);
     return ResponseEntity.ok(response);
   }
 

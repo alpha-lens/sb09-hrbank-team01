@@ -1,6 +1,6 @@
 package com.team1.hrbank.service;
 
-import com.team1.hrbank.dto.CursorPageResponse;
+import com.team1.hrbank.dto.cursor.CursorPageResponse;
 import com.team1.hrbank.dto.EmployeeDto;
 import com.team1.hrbank.dto.dashboard.EmployeeDistributionDto;
 import com.team1.hrbank.dto.dashboard.EmployeeTrendDto;
