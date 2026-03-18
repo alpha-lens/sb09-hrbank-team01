@@ -2,7 +2,7 @@ package com.team1.hrbank.controller;
 
 import com.team1.hrbank.dto.BackupDownloadDto;
 import com.team1.hrbank.dto.BackupDto;
-import com.team1.hrbank.dto.cursor.CursorPageResponseBackupDto;
+import com.team1.hrbank.dto.cursor.CursorPageResponse;
 import com.team1.hrbank.entity.BackupStatus;
 import com.team1.hrbank.service.BackupService;
 
@@ -59,7 +59,7 @@ public class BackupController {
   /* ── 백업 이력 목록 조회 ──────────────────────────────── */
   @GetMapping
   @Operation(summary = "백업 이력 목록 조회", description = "조건별 필터링 및 커서 페이지네이션으로 조회합니다.")
-  public ResponseEntity<CursorPageResponseBackupDto> getList(
+  public ResponseEntity<CursorPageResponse> getList(
       @RequestParam(required = false) String worker,
       @RequestParam(required = false) Instant startedAtFrom,
       @RequestParam(required = false) Instant startedAtTo,
