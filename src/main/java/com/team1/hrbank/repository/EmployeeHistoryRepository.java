@@ -4,6 +4,7 @@ import com.team1.hrbank.entity.EmployeeHistory;
 import com.team1.hrbank.entity.HistoryType;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -12,6 +13,9 @@ import org.springframework.data.repository.query.Param;
 public interface EmployeeHistoryRepository extends JpaRepository<EmployeeHistory, Long> {
 
   long countByCreatedAtBetween(Instant from, Instant to);
+
+  @Query("SELECT MAX(h.id) FROM EmployeeHistory h")
+  Optional<Long> findMaxId();
 
   // 다중 조건 조회 (JPQL로 직접 작성)
   @Query("""

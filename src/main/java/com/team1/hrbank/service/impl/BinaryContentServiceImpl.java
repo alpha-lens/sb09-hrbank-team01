@@ -6,6 +6,10 @@ import com.team1.hrbank.global.ResourceNotFoundException;
 import com.team1.hrbank.repository.BinaryContentRepository;
 import com.team1.hrbank.service.BinaryContentService;
 import com.team1.hrbank.storage.FileStorageService;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -59,9 +63,21 @@ public class BinaryContentServiceImpl implements BinaryContentService {
 
     @Override
     public byte[] getBytes(Long id) {
-        binaryContentRepository.findById(id)
+        BinaryContent content = binaryContentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("파일을 찾을 수 없습니다. id=" + id));
-        return fileStorageService.load(id);
+
+        // FileStorageService 경로(file-data-map/{id})에 파일이 있으면 그쪽에서 로드
+        if (fileStorageService.exists(id)) {
+            return fileStorageService.load(id);
+        }
+
+        // 백업 등 직접 저장된 파일은 filePath에서 직접 읽기
+        try {
+            Path filePath = Paths.get(content.getFilePath()).toAbsolutePath().normalize();
+            return Files.readAllBytes(filePath);
+        } catch (IOException e) {
+            throw new RuntimeException("파일을 읽을 수 없습니다: id=" + id, e);
+        }
     }
 
     @Override

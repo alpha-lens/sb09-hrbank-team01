@@ -10,6 +10,7 @@ import com.team1.hrbank.dto.cursor.CursorPageResponseEmployeeHistoryDto;
 import com.team1.hrbank.dto.request.EmployeeHistoryCreateRequest;
 import com.team1.hrbank.dto.request.EmployeeHistorySearchRequest;
 import com.team1.hrbank.entity.EmployeeHistory;
+import com.team1.hrbank.entity.HistoryType;
 import com.team1.hrbank.global.ResourceNotFoundException;
 import com.team1.hrbank.mapper.EmployeeHistoryMapper;
 import com.team1.hrbank.repository.EmployeeHistoryRepository;
@@ -90,13 +91,19 @@ public class EmployeeHistoryServiceImpl implements EmployeeHistoryService {
     Pageable pageable = PageRequest.of(0, request.size() + 1,
         Sort.by(direction, sortField));
 
+    // type 변환: "ALL" 또는 빈문자열이면 null (전체 조회)
+    HistoryType historyType = null;
+    if (request.type() != null && !request.type().isBlank() && !"ALL".equalsIgnoreCase(request.type())) {
+      historyType = HistoryType.valueOf(request.type().toUpperCase());
+    }
+
     // 1 조회
     List<EmployeeHistory> histories =
         employeeHistoryRepository.findHistoriesWithConditions(
             request.employeeNumber(),
             request.memo(),
             request.ipAddress(),
-            request.historyType(),
+            historyType,
             request.atFrom(),
             request.atTo(),
             cursorId,
@@ -127,7 +134,7 @@ public class EmployeeHistoryServiceImpl implements EmployeeHistoryService {
         request.employeeNumber(),
         request.memo(),
         request.ipAddress(),
-        request.historyType(),
+        historyType,
         request.atFrom(),
         request.atTo()
     );

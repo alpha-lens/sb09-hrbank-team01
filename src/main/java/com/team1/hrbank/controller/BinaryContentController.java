@@ -57,11 +57,10 @@ public class BinaryContentController {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.parseMediaType(metadata.contentType()));
         headers.setContentLength(bytes.length);
-        headers.setContentDisposition(
-                ContentDisposition.attachment()
-                        .filename(fileName, StandardCharsets.UTF_8)
-                        .build()
-        );
+        String encodedFileName = java.net.URLEncoder.encode(fileName, StandardCharsets.UTF_8)
+                .replaceAll("\\+", "%20");
+        headers.set(HttpHeaders.CONTENT_DISPOSITION,
+                "attachment; filename=\"" + fileName + "\"; filename*=UTF-8''" + encodedFileName);
 
         return new ResponseEntity<>(bytes, headers, HttpStatus.OK);
     }
