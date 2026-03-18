@@ -2,7 +2,7 @@ package com.team1.hrbank.service.impl;
 
 import com.team1.hrbank.dto.BackupDownloadDto;
 import com.team1.hrbank.dto.BackupDto;
-import com.team1.hrbank.dto.cursor.CursorPageResponseBackupDto;
+import com.team1.hrbank.dto.cursor.CursorPageResponse;
 import com.team1.hrbank.dto.request.BackupSearchRequest;
 import com.team1.hrbank.entity.Backup;
 import com.team1.hrbank.entity.BackupStatus;
@@ -18,22 +18,15 @@ import com.team1.hrbank.service.BackupService;
 
 import jakarta.persistence.EntityNotFoundException;
 
-import java.nio.charset.StandardCharsets;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.FileSystemResource;
-import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.http.ContentDisposition;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -120,7 +113,7 @@ public class BackupServiceImpl implements BackupService {
   // 백업 이력 목록 조회
   @Override
   @Transactional(readOnly = true)
-  public CursorPageResponseBackupDto getList(
+  public CursorPageResponse getList(
       String worker,
       Instant startedAtFrom,
       Instant startedAtTo,
@@ -168,7 +161,7 @@ public class BackupServiceImpl implements BackupService {
           : last.getStartedAt().toString();
     }
 
-    return new CursorPageResponseBackupDto(
+    return new CursorPageResponse(
         results.stream().map(backupMapper::toDto).toList(),
         nextCursor,
         nextIdAfter,

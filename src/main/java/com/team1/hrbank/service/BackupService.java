@@ -2,13 +2,9 @@ package com.team1.hrbank.service;
 
 import com.team1.hrbank.dto.BackupDownloadDto;
 import com.team1.hrbank.dto.BackupDto;
-import com.team1.hrbank.dto.cursor.CursorPageResponseBackupDto;
-import com.team1.hrbank.entity.Backup;
+import com.team1.hrbank.dto.cursor.CursorPageResponse;
 import com.team1.hrbank.entity.BackupStatus;
-import org.springframework.core.io.Resource;
-import java.io.IOException;
 import java.time.Instant;
-import org.springframework.http.ResponseEntity;
 
 public interface BackupService {
 
@@ -20,7 +16,7 @@ public interface BackupService {
   BackupDownloadDto getDownloadInfo(Long id);
 
   // 백업 이력 목록 조회
-  CursorPageResponseBackupDto getList(
+  CursorPageResponse getList(
       String worker,
       Instant startedAtFrom,
       Instant startedAtTo,
