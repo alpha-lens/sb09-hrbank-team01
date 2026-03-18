@@ -63,10 +63,13 @@ public class EmployeeSpecification {
         }
       }
 
-      // 7. 커서 기반 페이징 (idAfter)
-      // asc -> id > idAfter
+      // 7. 커서 기반 페이징 (idAfter) - 정렬 방향에 따라 조건 변경
       if (request.idAfter() != null && request.idAfter() > 0) {
-        predicates.add(cb.gt(root.get("id"), request.idAfter()));
+        if ("desc".equalsIgnoreCase(request.sortDirection())) {
+          predicates.add(cb.lt(root.get("id"), request.idAfter()));
+        } else {
+          predicates.add(cb.gt(root.get("id"), request.idAfter()));
+        }
       }
 
       // 모든 리스트의 조건을 AND로 결합

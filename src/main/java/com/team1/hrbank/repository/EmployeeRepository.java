@@ -28,6 +28,11 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long>,
   long findEmployeeCount(@Param("status") String status,
       @Param("fromDate") LocalDate fromDate, @Param("endDate") LocalDate endDate);
 
+  @Query(value = "SELECT COUNT(*) FROM employees "
+                 + "WHERE hire_date::date BETWEEN :fromDate AND :endDate", nativeQuery = true)
+  long findEmployeeCountAll(@Param("fromDate") LocalDate fromDate,
+      @Param("endDate") LocalDate endDate);
+
   @Query(value = """
       SELECT 
           to_char(hire_date, 
