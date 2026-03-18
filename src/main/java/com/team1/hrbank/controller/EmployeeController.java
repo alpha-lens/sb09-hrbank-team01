@@ -92,7 +92,7 @@ public class EmployeeController {
   public long countEmployees(
       @ModelAttribute EmployeeCountRequestDto request
   ) {
-    return employeeService.findEmployeeCount(request.status(), request.startDate(),
+    return employeeService.findEmployeeCount(request.status(), request.fromDate(),
         request.endDate());
   }
 }
