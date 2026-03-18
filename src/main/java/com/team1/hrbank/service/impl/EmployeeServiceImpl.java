@@ -33,7 +33,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -190,7 +189,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     EmployeeDto saved = toDto(employeeRepository.save(employee));
 
     employeeHistoryService.createEmployeeHistory(
-        new EmployeeHistoryCreateRequest(HistoryType.CREATED, saved.employeeNumber(), List.of(), null),
+        new EmployeeHistoryCreateRequest(HistoryType.CREATED, saved.employeeNumber(), List.of(), request.memo()),
         ipAddress
     );
 
@@ -204,15 +203,6 @@ public class EmployeeServiceImpl implements EmployeeService {
       throws IOException {
     Employee employee = employeeRepository.findById(id)
         .orElseThrow(() -> new NoSuchElementException("해당 직원을 찾을 수 없습니다 : " + id));
-
-    // 변경 전 값 저장
-    String beforeName = employee.getName();
-    String beforeEmail = employee.getEmail();
-    String beforeDepartmentName = employee.getDepartment().getName();
-    Long beforeDepartmentId = employee.getDepartment().getId();
-    String beforePosition = employee.getPosition();
-    String beforeHireDate = employee.getHireDate().toString();
-    String beforeStatus = employee.getStatus().name();
 
     Department department = null;
     if (request.departmentId() != null) {
@@ -241,7 +231,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     employeeHistoryService.createEmployeeHistory(
-        new EmployeeHistoryCreateRequest(HistoryType.UPDATED, employee.getEmployeeNumber(), diffs, null),
+        new EmployeeHistoryCreateRequest(HistoryType.UPDATED, employee.getEmployeeNumber(), diffs, request.memo()),
         ipAddress
     );
 
