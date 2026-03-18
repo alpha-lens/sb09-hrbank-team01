@@ -23,7 +23,11 @@ public record EmployeeSearchRequest(
     if (sortDirection == null) sortDirection = "asc";
 
     if(idAfter == null && cursor != null && !cursor.isBlank()) {
-      idAfter = Long.parseLong(cursor);
+      try {
+        idAfter = Long.parseLong(cursor);
+      } catch (NumberFormatException e) {
+        throw new IllegalArgumentException("잘못된 id 값입니다: " + cursor);
+      }
     }
   }
 }
