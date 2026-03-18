@@ -65,11 +65,12 @@ public class BackupController {
       @RequestParam(required = false) Instant startedAtTo,
       @RequestParam(required = false) BackupStatus status,
       @RequestParam(defaultValue = "startedAt") String sortField,
-      @RequestParam(required = false) Long lastId,
+      @RequestParam(required = false) Long idAfter,
+      @RequestParam(required = false) String cursor,
       @RequestParam(defaultValue = "10") int size) {
 
     return ResponseEntity.ok(backupService.getList(
-        worker, startedAtFrom, startedAtTo, status, sortField, lastId, size));
+        worker, startedAtFrom, startedAtTo, status, sortField, idAfter, size));
   }
 
   /* ── 요청자 IP 추출 ───────────────────────────────────── */

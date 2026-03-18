@@ -52,7 +52,7 @@ public class EmployeeController {
       @RequestPart("employee") EmployeeCreateRequest employeeCreateRequest,
       @RequestPart(required = false) MultipartFile profile, HttpServletRequest httpRequest
   ) throws IOException {
-    String ipAddress = httpRequest.getRemoteAddr();
+    String ipAddress = resolveIpAddress(httpRequest);
     return ResponseEntity.status(HttpStatus.CREATED).body(employeeService.createEmployee(employeeCreateRequest, profile, ipAddress));
   }
 
@@ -61,14 +61,27 @@ public class EmployeeController {
       @RequestPart("employee") EmployeeUpdateRequest employeeUpdateRequest,
       @RequestPart(required = false) MultipartFile profile, HttpServletRequest httpRequest)
       throws IOException {
-    String ipAddress = httpRequest.getRemoteAddr();
+    String ipAddress = resolveIpAddress(httpRequest);
     return employeeService.updateEmployee(id, employeeUpdateRequest, profile, ipAddress);
   }
 
   @DeleteMapping("/{id}")
   public void deleteEmployee(@PathVariable long id, HttpServletRequest httpRequest) {
-    String ipAddress = httpRequest.getRemoteAddr();
+    String ipAddress = resolveIpAddress(httpRequest);
     employeeService.deleteEmployee(id, ipAddress);
+  }
+
+  private String resolveIpAddress(HttpServletRequest request) {
+    String ip = request.getHeader("X-Forwarded-For");
+    if (ip != null && !ip.isBlank()) {
+      ip = ip.split(",")[0].trim();
+    } else {
+      ip = request.getRemoteAddr();
+    }
+    if ("0:0:0:0:0:0:0:1".equals(ip) || "::1".equals(ip)) {
+      ip = "127.0.0.1";
+    }
+    return ip;
   }
 
   @GetMapping("/stats/trend")

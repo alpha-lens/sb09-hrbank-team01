@@ -21,11 +21,11 @@ public interface EmployeeHistoryRepository extends JpaRepository<EmployeeHistory
   @Query("""
         SELECT h
         FROM EmployeeHistory h
-        WHERE (:employeeNumber IS NULL
+        WHERE (:employeeNumber IS NULL OR :employeeNumber = ''
                 OR h.employeeNumber LIKE %:employeeNumber%)
-          AND (:memo IS NULL
+          AND (:memo IS NULL OR :memo = ''
                 OR h.memo LIKE %:memo%)
-          AND (:ipAddress IS NULL
+          AND (:ipAddress IS NULL OR :ipAddress = ''
                 OR h.ipAddress LIKE %:ipAddress%)
           AND (:type IS NULL
                 OR h.type = :type)
@@ -49,11 +49,11 @@ public interface EmployeeHistoryRepository extends JpaRepository<EmployeeHistory
   @Query("""
     SELECT COUNT(h)
     FROM EmployeeHistory h
-    WHERE (:employeeNumber IS NULL
+    WHERE (:employeeNumber IS NULL OR :employeeNumber = ''
             OR h.employeeNumber LIKE %:employeeNumber%)
-      AND (:memo IS NULL
+      AND (:memo IS NULL OR :memo = ''
             OR h.memo LIKE %:memo%)
-      AND (:ipAddress IS NULL
+      AND (:ipAddress IS NULL OR :ipAddress = ''
             OR h.ipAddress LIKE %:ipAddress%)
       AND (:type IS NULL
             OR h.type = :type)

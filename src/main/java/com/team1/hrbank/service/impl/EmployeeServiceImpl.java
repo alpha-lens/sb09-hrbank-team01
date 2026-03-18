@@ -190,7 +190,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     EmployeeDto saved = toDto(employeeRepository.save(employee));
 
     employeeHistoryService.createEmployeeHistory(
-        new EmployeeHistoryCreateRequest(HistoryType.CREATED, saved.employeeNumber(), List.of(), null),
+        new EmployeeHistoryCreateRequest(HistoryType.CREATED, saved.employeeNumber(), List.of(), request.memo()),
         ipAddress
     );
 
@@ -241,7 +241,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     employeeHistoryService.createEmployeeHistory(
-        new EmployeeHistoryCreateRequest(HistoryType.UPDATED, employee.getEmployeeNumber(), diffs, null),
+        new EmployeeHistoryCreateRequest(HistoryType.UPDATED, employee.getEmployeeNumber(), diffs, request.memo()),
         ipAddress
     );
 
@@ -332,7 +332,8 @@ public class EmployeeServiceImpl implements EmployeeService {
       EmployeeTrendTimeUnit unit) {
 
     // 1. 기본값 및 기간 설정 (기존과 동일)
-    LocalDate finalEnd = (endDate != null) ? endDate : LocalDate.now();
+    LocalDate finalEnd = (endDate != null) ? endDate
+        : LocalDate.now().withDayOfMonth(LocalDate.now().lengthOfMonth());
     EmployeeTrendTimeUnit finalUnit = (unit != null) ? unit : EmployeeTrendTimeUnit.MONTH;
     LocalDate finalStart;
     if (startDate != null) {
@@ -424,7 +425,7 @@ public class EmployeeServiceImpl implements EmployeeService {
   @Override
   public long findEmployeeCount(EmployeeStatus status, LocalDate startDate, LocalDate endDate) {
     if (endDate == null) {
-      endDate = LocalDate.now();
+      endDate = LocalDate.now().withDayOfMonth(LocalDate.now().lengthOfMonth());
     }
 
     if (startDate == null) {

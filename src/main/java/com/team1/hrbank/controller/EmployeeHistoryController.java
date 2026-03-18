@@ -40,10 +40,7 @@ public class EmployeeHistoryController {
       @RequestBody EmployeeHistoryCreateRequest request,
       HttpServletRequest httpRequest
   ) {
-    String ipAddress = httpRequest.getHeader("X-Forwarded-For");
-    if (ipAddress == null) {
-      ipAddress = httpRequest.getRemoteAddr();
-    }
+    String ipAddress = resolveIpAddress(httpRequest);
     employeeHistoryService.createEmployeeHistory(request, ipAddress);
     return ResponseEntity.status(HttpStatus.OK).build();
   }
@@ -91,6 +88,19 @@ public class EmployeeHistoryController {
         employeeHistoryService.countEmployeeHistories(
             parseInstant(fromDate), parseInstant(toDate))
     );
+  }
+
+  private String resolveIpAddress(HttpServletRequest request) {
+    String ip = request.getHeader("X-Forwarded-For");
+    if (ip != null && !ip.isBlank()) {
+      ip = ip.split(",")[0].trim();
+    } else {
+      ip = request.getRemoteAddr();
+    }
+    if ("0:0:0:0:0:0:0:1".equals(ip) || "::1".equals(ip)) {
+      ip = "127.0.0.1";
+    }
+    return ip;
   }
 
   private Instant parseInstant(String dateStr) {
