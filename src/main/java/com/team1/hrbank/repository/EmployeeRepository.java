@@ -77,15 +77,19 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long>,
   @Query("SELECT e FROM Employee e JOIN FETCH e.department")
   Page<Employee> findAllWithDepartment(Pageable pageable);
 
-  long countByDepartmentId(Long departmentId);
+  @Query("SELECT COUNT(e) FROM Employee e WHERE e.department.id = :departmentId AND e.status <> 'RESIGNED'")
+  long countByDepartmentId(@Param("departmentId") Long departmentId);
 
-  @Query("SELECT e.department.id, COUNT(e.id) FROM Employee e WHERE e.department.id IN :departmentIds GROUP BY e.department.id")
+  @Query("SELECT e.department.id, COUNT(e.id) FROM Employee e WHERE e.department.id IN :departmentIds AND e.status <> 'RESIGNED' GROUP BY e.department.id")
   List<Object[]> countByDepartmentIds(@Param("departmentIds") List<Long> departmentIds);
 
-  boolean existsByDepartmentId(Long departmentId);
+  @Query("SELECT CASE WHEN COUNT(e) > 0 THEN true ELSE false END FROM Employee e WHERE e.department.id = :departmentId AND e.status <> 'RESIGNED'")
+  boolean existsByDepartmentIdAndNotResigned(@Param("departmentId") Long departmentId);
 
   boolean existsByEmail(String email);
 
   @Query("SELECT COUNT(e) FROM Employee e WHERE e.hireDate < :date")
   int countTotalEmployeesBefore(@Param("date") LocalDate date);
+         
+  List<Employee> findByDepartmentIdAndStatus(Long departmentId, EmployeeStatus status);
 }

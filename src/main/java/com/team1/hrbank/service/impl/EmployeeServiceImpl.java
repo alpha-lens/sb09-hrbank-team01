@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -148,6 +149,22 @@ public class EmployeeServiceImpl implements EmployeeService {
   @Transactional
   public EmployeeDto createEmployee(EmployeeCreateRequest request, MultipartFile profileImage, String ipAddress)
       throws IOException {
+    if (request.name() == null || request.name().isBlank()) {
+      throw new IllegalArgumentException("이름은 필수 입력값입니다.");
+    }
+    if (request.email() == null || request.email().isBlank()) {
+      throw new IllegalArgumentException("이메일은 필수 입력값입니다.");
+    }
+    if (request.departmentId() == null) {
+      throw new IllegalArgumentException("부서 ID는 필수 입력값입니다.");
+    }
+    if (request.position() == null || request.position().isBlank()) {
+      throw new IllegalArgumentException("직함은 필수 입력값입니다.");
+    }
+    if (request.hireDate() == null) {
+      throw new IllegalArgumentException("입사일은 필수 입력값입니다.");
+    }
+
     if (employeeRepository.existsByEmail(request.email())) {
       throw new IllegalArgumentException("이미 사용 중인 이메일입니다: " + request.email());
     }
@@ -158,10 +175,10 @@ public class EmployeeServiceImpl implements EmployeeService {
         .orElseThrow(() -> new NoSuchElementException("해당 부서를 찾을 수 없습니다."));
     String employeeNumber = lastEmployeeNumber != null ?
         generateEmployeeNumber(prefix, Integer.parseInt(lastEmployeeNumber.substring(7)))
-        : generateEmployeeNumber(prefix, 1);
+        : generateEmployeeNumber(prefix, 0);
 
     Employee employee = Employee.of(employeeNumber, request.name(), request.email(), department,
-        request.position());
+        request.position(), request.hireDate());
 
     if (profileImage != null && !profileImage.isEmpty()) {
       BinaryContent profile = saveProfileImage(profileImage);
@@ -187,6 +204,16 @@ public class EmployeeServiceImpl implements EmployeeService {
       throws IOException {
     Employee employee = employeeRepository.findById(id)
         .orElseThrow(() -> new NoSuchElementException("해당 직원을 찾을 수 없습니다 : " + id));
+
+    // 변경 전 값 저장
+    String beforeName = employee.getName();
+    String beforeEmail = employee.getEmail();
+    String beforeDepartmentName = employee.getDepartment().getName();
+    Long beforeDepartmentId = employee.getDepartment().getId();
+    String beforePosition = employee.getPosition();
+    String beforeHireDate = employee.getHireDate().toString();
+    String beforeStatus = employee.getStatus().name();
+
     Department department = null;
     if (request.departmentId() != null) {
       department = departmentRepository.findById(request.departmentId())
