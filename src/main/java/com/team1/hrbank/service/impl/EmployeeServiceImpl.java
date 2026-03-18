@@ -165,7 +165,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     if (employeeRepository.existsByEmail(request.email())) {
-      throw new IllegalArgumentException("이미 사용 중인 이메일입니다: " + request.email());
+      throw new IllegalArgumentException("IllegalArgumentException");
     }
 
     String prefix = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMM"));
