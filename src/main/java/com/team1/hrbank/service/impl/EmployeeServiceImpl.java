@@ -307,7 +307,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
   @Override
   @Transactional
-  public void deleteEmployee(Long id) {
+  public void deleteEmployee(Long id, String ipAddress) {
     Employee employee = employeeRepository.findById(id)
         .orElseThrow(() -> new NoSuchElementException("해당 직원을 찾을 수 없습니다: " + id));
 
@@ -315,11 +315,11 @@ public class EmployeeServiceImpl implements EmployeeService {
         employee.getProfileImage().getId() : null;
     employeeRepository.delete(employee);
 
+    String empNumber = employee.getEmployeeNumber();
+
     if (profileId != null && fileStorageService.exists(profileId)) {
       fileStorageService.delete(profileId);
     }
-
-    employeeRepository.delete(employee);
 
     employeeHistoryService.createEmployeeHistory(
         new EmployeeHistoryCreateRequest(HistoryType.DELETED, empNumber, List.of(), null),
@@ -330,7 +330,8 @@ public class EmployeeServiceImpl implements EmployeeService {
   @Override
   public List<EmployeeTrendDto> findEmployeeTrend(LocalDate startDate, LocalDate endDate,
       EmployeeTrendTimeUnit unit) {
-    // 1. 기본값 및 기간 설정
+
+    // 1. 기본값 및 기간 설정 (기존과 동일)
     LocalDate finalEnd = (endDate != null) ? endDate : LocalDate.now();
     EmployeeTrendTimeUnit finalUnit = (unit != null) ? unit : EmployeeTrendTimeUnit.MONTH;
     LocalDate finalStart;
@@ -342,37 +343,47 @@ public class EmployeeServiceImpl implements EmployeeService {
       finalStart = finalEnd.minusMonths(11).withDayOfMonth(1);
     }
 
-    // 2. DB 데이터 조회 (인터페이스로 받음)
+    // [수정] 2. 시작 시점(finalStart) 이전의 전체 직원 수를 먼저 가져옵니다.
+    // 이 메서드는 repository에 별도로 구현되어야 합니다. (예: finalStart 이전 입사자 - 퇴사자)
+    int totalCount = employeeRepository.countTotalEmployeesBefore(finalStart);
+
+    // 3. 해당 기간 내의 "월별 증감 데이터" 조회
+    // rawResults에는 각 월별로 '순수하게 늘거나 줄어든 인원수'가 들어있어야 합니다.
     List<EmployeeTrendMapping> rawResults = employeeRepository.getTrendData(
         finalStart, finalEnd, finalUnit.name()
     );
 
-    // 3. 조회를 위해 Map으로 변환 (Key: 날짜문자열, Value: 카운트)
     Map<String, Integer> dbDataMap = rawResults.stream()
         .collect(Collectors.toMap(EmployeeTrendMapping::getPeriod, EmployeeTrendMapping::getCount));
 
-    // 4. 전체 기간 루프 돌며 0 채우기 및 DTO 생성
+    // 4. 전체 기간 루프 돌며 누적치 계산
     List<EmployeeTrendDto> result = new ArrayList<>();
     LocalDate current = finalStart;
-    int previousCount = 0;
+
+    // 누적 계산을 위해 이전 달의 '총 인원'을 저장할 변수
+    int previousTotal = totalCount;
 
     while (!current.isAfter(finalEnd)) {
       String dateKey = formatDate(current, finalUnit);
-      int currentCount = dbDataMap.getOrDefault(dateKey, 0);
 
-      // 변동치 계산
-      int change = currentCount - previousCount;
-      double changeRate = (previousCount == 0) ? (currentCount > 0 ? 100.0 : 0.0)
-          : ((double) change / previousCount) * 100;
+      // 해당 월의 순수 증감분 (예: +3명, -1명 등)
+      int monthlyChange = dbDataMap.getOrDefault(dateKey, 0);
+
+      // [핵심] 현재 총 인원 = 이전 총 인원 + 이번 달 증감분
+      int currentTotal = previousTotal + monthlyChange;
+
+      // 변동률 계산 (이미지에는 안 나오지만 기존 로직 유지 시)
+      double changeRate = (previousTotal == 0) ? (currentTotal > 0 ? 100.0 : 0.0)
+          : ((double) monthlyChange / previousTotal) * 100;
 
       result.add(new EmployeeTrendDto(
           dateKey,
-          currentCount,
-          change,
+          currentTotal, // 차트의 Y축 값이 될 누적 인원수
+          monthlyChange,
           Math.round(changeRate * 100) / 100.0
       ));
 
-      previousCount = currentCount;
+      previousTotal = currentTotal; // 다음 루프를 위해 현재 총합을 저장
       current = incrementDate(current, finalUnit);
     }
 
