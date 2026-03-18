@@ -129,4 +129,3 @@ INSERT INTO backups (worker, started_at, ended_at, status, file_id) VALUES
                                                                         ('system',       '2026-03-12 02:00:00', '2026-03-12 02:05:00', 'COMPLETED', NULL),
                                                                         ('192.168.0.10', '2026-03-13 09:00:00', '2026-03-13 09:01:00', 'FAILED',    NULL),
                                                                         ('system',       '2026-03-11 02:00:00', '2026-03-11 02:01:00', 'FAILED',    NULL);
-

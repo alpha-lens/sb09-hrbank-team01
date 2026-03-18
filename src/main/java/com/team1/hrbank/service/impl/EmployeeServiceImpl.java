@@ -33,7 +33,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -166,7 +165,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     if (employeeRepository.existsByEmail(request.email())) {
-      throw new IllegalArgumentException("이미 사용 중인 이메일입니다: " + request.email());
+      throw new IllegalArgumentException("IllegalArgumentException");
     }
 
     String prefix = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMM"));
@@ -215,15 +214,6 @@ public class EmployeeServiceImpl implements EmployeeService {
       throws IOException {
     Employee employee = employeeRepository.findById(id)
         .orElseThrow(() -> new NoSuchElementException("해당 직원을 찾을 수 없습니다 : " + id));
-
-    // 변경 전 값 저장
-    String beforeName = employee.getName();
-    String beforeEmail = employee.getEmail();
-    String beforeDepartmentName = employee.getDepartment().getName();
-    Long beforeDepartmentId = employee.getDepartment().getId();
-    String beforePosition = employee.getPosition();
-    String beforeHireDate = employee.getHireDate().toString();
-    String beforeStatus = employee.getStatus().name();
 
     Department department = null;
     if (request.departmentId() != null) {

@@ -18,7 +18,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleIllegalArgument(IllegalArgumentException e) {
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
-                .body(new ErrorResponse("IllegalStateException", e.getMessage()));
+                .body(new ErrorResponse(e.getMessage()));
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
