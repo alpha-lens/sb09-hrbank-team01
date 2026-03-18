@@ -28,6 +28,7 @@ import com.team1.hrbank.storage.FileStorageService;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.IsoFields;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +40,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -79,7 +81,16 @@ public class EmployeeServiceImpl implements EmployeeService {
       case DAY -> date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
       case MONTH -> date.format(DateTimeFormatter.ofPattern("yyyy-MM"));
       case YEAR -> date.format(DateTimeFormatter.ofPattern("yyyy"));
-      case QUARTER, WEEK -> null;
+      case QUARTER -> {
+        int year = date.getYear();
+        int quarter = date.get(IsoFields.QUARTER_OF_YEAR);
+        yield String.format("%d-Q%d", year, quarter);
+      }
+      case WEEK -> {
+        int year = date.get(IsoFields.WEEK_BASED_YEAR);
+        int week = date.get(IsoFields.WEEK_OF_WEEK_BASED_YEAR);
+        yield String.format("%d-W%02d", year, week);
+      }
     };
   }
 
@@ -88,7 +99,8 @@ public class EmployeeServiceImpl implements EmployeeService {
       case DAY -> date.plusDays(1);
       case MONTH -> date.plusMonths(1);
       case YEAR -> date.plusYears(1);
-      case QUARTER, WEEK -> null;
+      case QUARTER -> date.plusMonths(3);
+      case WEEK -> date.plusWeeks(1);
     };
   }
 
@@ -213,7 +225,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
   @Override
   public CursorPageResponseEmployeeDto findAllEmployees(EmployeeSearchRequest request) {
-    Pageable pageable = PageRequest.of(0, request.size() + 1, Sort.by(Sort.Direction.ASC, "id"));
+    Pageable pageable = PageRequest.of(0, request.size() + 1, Sort.by(Direction.ASC, "id"));
 
     Page<Employee> employeePage = employeeRepository.findAll(
         EmployeeSpecification.filterBy(request),
@@ -253,13 +265,14 @@ public class EmployeeServiceImpl implements EmployeeService {
     Employee employee = employeeRepository.findById(id)
         .orElseThrow(() -> new NoSuchElementException("해당 직원을 찾을 수 없습니다: " + id));
 
-    String employeeNumber = employee.getEmployeeNumber();
+    Long profileId = null;
+    if (employeeRepository.findById(id).isPresent()) {
+      profileId = employeeRepository.findById(id).get().getId();
+    }
 
-    if (employee.getProfileImage() != null) {
-      Long profileId = employee.getProfileImage().getId();
-      if (fileStorageService.exists(profileId)) {
-        fileStorageService.delete(profileId);
-      }
+    employeeRepository.deleteById(id);
+    if (fileStorageService.exists(profileId)) {
+      fileStorageService.delete(profileId);
     }
 
     employeeRepository.delete(employee);
@@ -276,8 +289,14 @@ public class EmployeeServiceImpl implements EmployeeService {
     // 1. 기본값 및 기간 설정
     LocalDate finalEnd = (endDate != null) ? endDate : LocalDate.now();
     EmployeeTrendTimeUnit finalUnit = (unit != null) ? unit : EmployeeTrendTimeUnit.MONTH;
-    LocalDate finalStart =
-        (startDate != null) ? startDate : finalEnd.minusMonths(11).withDayOfMonth(1);
+    LocalDate finalStart;
+    if (startDate != null) {
+      finalStart = startDate;
+    } else if (finalUnit == EmployeeTrendTimeUnit.YEAR) {
+      finalStart = finalEnd.minusYears(4).withDayOfYear(1);
+    } else {
+      finalStart = finalEnd.minusMonths(11).withDayOfMonth(1);
+    }
 
     // 2. DB 데이터 조회 (인터페이스로 받음)
     List<EmployeeTrendMapping> rawResults = employeeRepository.getTrendData(
@@ -354,7 +373,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     if (startDate == null) {
-      startDate = endDate.minusWeeks(1);
+      startDate = LocalDate.EPOCH;
     }
     return employeeRepository.findEmployeeCount(status.name(), startDate, endDate);
   }
