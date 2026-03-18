@@ -1,8 +1,8 @@
 package com.team1.hrbank.service.impl;
 
 import com.team1.hrbank.dto.DiffDto;
+import com.team1.hrbank.dto.CursorPageResponse;
 import com.team1.hrbank.dto.EmployeeDto;
-import com.team1.hrbank.dto.cursor.CursorPageResponseEmployeeDto;
 import com.team1.hrbank.dto.dashboard.EmployeeDistributionDto;
 import com.team1.hrbank.dto.dashboard.EmployeeTrendDto;
 import com.team1.hrbank.dto.request.EmployeeCreateRequest;
@@ -36,13 +36,13 @@ import java.util.NoSuchElementException;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 @Service
@@ -228,43 +228,47 @@ public class EmployeeServiceImpl implements EmployeeService {
   }
 
   @Override
-  public CursorPageResponseEmployeeDto findAllEmployees(EmployeeSearchRequest request) {
-    // BUG-3 수정: sortField/sortDirection 적용 (기본값: id ASC)
-    String sortField = (request.sortField() != null && !request.sortField().isBlank())
-        ? request.sortField() : "id";
-    Direction direction = "desc".equalsIgnoreCase(request.sortDirection())
-        ? Direction.DESC : Direction.ASC;
-    Sort sort = Sort.by(direction, sortField);
-    if (!"id".equals(sortField)) {
-      sort = sort.and(Sort.by(direction, "id"));
-    }
+  public CursorPageResponse findAllEmployees(EmployeeSearchRequest request) {
+    String sortField = StringUtils.hasText(request.sortField()) ? request.sortField() : "id";
+    Direction direction = request.sortDirection().equalsIgnoreCase("DESC") ? Direction.DESC : Direction.ASC;
+    Sort sort = Sort.by(direction, sortField).and(Sort.by(direction, "id"));
+
     Pageable pageable = PageRequest.of(0, request.size() + 1, sort);
 
-    Page<Employee> employeePage = employeeRepository.findAll(
+    // 2. 실제 데이터 조회 (카운트 쿼리도 함께 발생하지만 idAfter 조건은 무시되도록 Specification에 설정됨)
+    List<Employee> content = employeeRepository.findAll(
         EmployeeSpecification.filterBy(request),
         pageable
-    );
+    ).getContent();
 
-    List<Employee> content = employeePage.getContent();
-
+    // 3. 다음 페이지 존재 여부 확인 및 데이터 자르기
     boolean hasNext = content.size() > request.size();
     List<Employee> resultList = hasNext ? content.subList(0, request.size()) : content;
 
     // BUG-4 수정: hasNext=true일 때만 nextCursor/nextIdAfter 설정
     String nextCursor = null;
-    Long nextIdAfter = null;
-    if (hasNext && !resultList.isEmpty()) {
-      Long lastId = resultList.get(resultList.size() - 1).getId();
-      nextCursor = String.valueOf(lastId);
-      nextIdAfter = lastId;
+    Long nextIdAfter = 0L;
+
+    if (!resultList.isEmpty()) {
+      Employee lastEmp = resultList.get(resultList.size() - 1);
+      nextIdAfter = lastEmp.getId();
+
+      // 정렬 필드에 따라 cursor에 담을 값 결정
+      nextCursor = switch (sortField) {
+        case "name" -> lastEmp.getName() + "_" + nextIdAfter;
+        case "hireDate" -> lastEmp.getHireDate().toString() + "_" + nextIdAfter;
+        case "position" -> lastEmp.getPosition() + "_" + nextIdAfter;
+        case "employeeNumber" -> lastEmp.getEmployeeNumber() + "_" + nextIdAfter;
+        default -> String.valueOf(lastEmp.getId());
+      };
     }
 
     List<EmployeeDto> dtoList = resultList.stream().map(this::toDto).toList();
 
-    // BUG-2 수정: 커서 조건 제외한 카운트 (전체 검색 결과 수)
-    long totalElements = employeeRepository.count(EmployeeSpecification.filterForCount(request));
+    // 4. 전체 데이터 수 조회 (커서 조건 없이 순수 검색 조건으로만 카운트)
+    long totalElements = employeeRepository.count(EmployeeSpecification.filterBy(request));
 
-    return new CursorPageResponseEmployeeDto(
+    return new CursorPageResponse(
         dtoList,
         nextCursor,
         nextIdAfter,
@@ -276,17 +280,16 @@ public class EmployeeServiceImpl implements EmployeeService {
 
   @Override
   @Transactional
-  public void deleteEmployee(Long id, String ipAddress) {
+  public void deleteEmployee(Long id) {
     Employee employee = employeeRepository.findById(id)
         .orElseThrow(() -> new NoSuchElementException("해당 직원을 찾을 수 없습니다: " + id));
 
-    String empNumber = employee.getEmployeeNumber();
+    Long profileId = (employee.getProfileImage() != null) ?
+        employee.getProfileImage().getId() : null;
+    employeeRepository.delete(employee);
 
-    if (employee.getProfileImage() != null) {
-      Long profileId = employee.getProfileImage().getId();
-      if (fileStorageService.exists(profileId)) {
-        fileStorageService.delete(profileId);
-      }
+    if (profileId != null && fileStorageService.exists(profileId)) {
+      fileStorageService.delete(profileId);
     }
 
     employeeRepository.delete(employee);
