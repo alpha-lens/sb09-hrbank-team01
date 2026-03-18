@@ -17,17 +17,17 @@ import org.springframework.web.multipart.MultipartFile;
 
 public interface EmployeeService {
 
-  EmployeeDto createEmployee(EmployeeCreateRequest request, MultipartFile profileImage, String ipAddress)
+  EmployeeDto createEmployee(EmployeeCreateRequest request, MultipartFile profileImage)
       throws IOException;
 
-  EmployeeDto updateEmployee(Long id, EmployeeUpdateRequest request, MultipartFile profileImage, String ipAddress)
+  EmployeeDto updateEmployee(Long id, EmployeeUpdateRequest request, MultipartFile profileImage)
       throws IOException;
 
   EmployeeDto findEmployee(Long id);
 
   CursorPageResponseEmployeeDto findAllEmployees(EmployeeSearchRequest request);
 
-  void deleteEmployee(Long id, String ipAddress);
+  void deleteEmployee(Long id);
 
   List<EmployeeTrendDto> findEmployeeTrend(LocalDate startDate, LocalDate endDate, EmployeeTrendTimeUnit unit);
 

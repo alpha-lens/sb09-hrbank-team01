@@ -1,12 +1,10 @@
 package com.team1.hrbank.service.impl;
 
-import com.team1.hrbank.dto.DiffDto;
 import com.team1.hrbank.dto.EmployeeDto;
 import com.team1.hrbank.dto.cursor.CursorPageResponseEmployeeDto;
 import com.team1.hrbank.dto.dashboard.EmployeeDistributionDto;
 import com.team1.hrbank.dto.dashboard.EmployeeTrendDto;
 import com.team1.hrbank.dto.request.EmployeeCreateRequest;
-import com.team1.hrbank.dto.request.EmployeeHistoryCreateRequest;
 import com.team1.hrbank.dto.request.EmployeeSearchRequest;
 import com.team1.hrbank.dto.request.EmployeeUpdateRequest;
 import com.team1.hrbank.entity.BinaryContent;
@@ -15,13 +13,11 @@ import com.team1.hrbank.entity.Employee;
 import com.team1.hrbank.entity.EmployeeDistribution;
 import com.team1.hrbank.entity.EmployeeStatus;
 import com.team1.hrbank.entity.EmployeeTrendTimeUnit;
-import com.team1.hrbank.entity.HistoryType;
 import com.team1.hrbank.repository.BinaryContentRepository;
 import com.team1.hrbank.repository.DepartmentRepository;
 import com.team1.hrbank.repository.EmployeeRepository;
 import com.team1.hrbank.repository.projection.DistributionMapping;
 import com.team1.hrbank.repository.projection.EmployeeTrendMapping;
-import com.team1.hrbank.service.EmployeeHistoryService;
 import com.team1.hrbank.service.EmployeeService;
 import com.team1.hrbank.specification.EmployeeSpecification;
 import com.team1.hrbank.storage.FileStorageService;
@@ -52,7 +48,6 @@ public class EmployeeServiceImpl implements EmployeeService {
   private final DepartmentRepository departmentRepository;
   private final FileStorageService fileStorageService;
   private final BinaryContentRepository binaryContentRepository;
-  private final EmployeeHistoryService employeeHistoryService;
 
   public String generateEmployeeNumber(String prefix, int lastSequence) {
     int nextSequence = lastSequence + 1;
@@ -92,35 +87,6 @@ public class EmployeeServiceImpl implements EmployeeService {
     };
   }
 
-  private List<DiffDto> buildDiffs(Employee before, EmployeeUpdateRequest request) {
-    List<DiffDto> diffs = new ArrayList<>();
-    if (request.name() != null && !request.name().equals(before.getName())) {
-      diffs.add(new DiffDto("name", before.getName(), request.name()));
-    }
-    if (request.email() != null && !request.email().equals(before.getEmail())) {
-      diffs.add(new DiffDto("email", before.getEmail(), request.email()));
-    }
-    if (request.departmentId() != null && !request.departmentId().equals(before.getDepartment().getId())) {
-      diffs.add(new DiffDto("departmentId",
-          String.valueOf(before.getDepartment().getId()),
-          String.valueOf(request.departmentId())));
-    }
-    if (request.position() != null && !request.position().equals(before.getPosition())) {
-      diffs.add(new DiffDto("position", before.getPosition(), request.position()));
-    }
-    if (request.hireDate() != null && !request.hireDate().equals(before.getHireDate())) {
-      diffs.add(new DiffDto("hireDate",
-          before.getHireDate().toString(),
-          request.hireDate().toString()));
-    }
-    if (request.status() != null && !request.status().equals(before.getStatus())) {
-      diffs.add(new DiffDto("status",
-          before.getStatus().name(),
-          request.status().name()));
-    }
-    return diffs;
-  }
-
   private BinaryContent saveProfileImage(MultipartFile profileImage) {
     String fileName = profileImage.getOriginalFilename();
     String contentType = profileImage.getContentType();
@@ -133,7 +99,7 @@ public class EmployeeServiceImpl implements EmployeeService {
 
   @Override
   @Transactional
-  public EmployeeDto createEmployee(EmployeeCreateRequest request, MultipartFile profileImage, String ipAddress)
+  public EmployeeDto createEmployee(EmployeeCreateRequest request, MultipartFile profileImage)
       throws IOException {
     if (employeeRepository.existsByEmail(request.email())) {
       throw new IllegalArgumentException("이미 사용 중인 이메일입니다: " + request.email());
@@ -157,20 +123,13 @@ public class EmployeeServiceImpl implements EmployeeService {
       employee.updateProfileImage(profile);
     }
 
-    EmployeeDto saved = toDto(employeeRepository.save(employee));
-
-    employeeHistoryService.createEmployeeHistory(
-        new EmployeeHistoryCreateRequest(HistoryType.CREATED, saved.employeeNumber(), List.of(), null),
-        ipAddress
-    );
-
-    return saved;
+    return toDto(employeeRepository.save(employee));
   }
 
   @Override
   @Transactional
   public EmployeeDto updateEmployee(Long id, EmployeeUpdateRequest request,
-      MultipartFile profileImage, String ipAddress)
+      MultipartFile profileImage)
       throws IOException {
     Employee employee = employeeRepository.findById(id)
         .orElseThrow(() -> new NoSuchElementException("해당 직원을 찾을 수 없습니다 : " + id));
@@ -180,8 +139,6 @@ public class EmployeeServiceImpl implements EmployeeService {
           .orElseThrow(
               () -> new NoSuchElementException("해당 부서를 찾을 수 없습니다 : " + request.departmentId()));
     }
-
-    List<DiffDto> diffs = buildDiffs(employee,request);
 
     employee.update(
         request.name(), request.email(), department, request.position(), request.hireDate(),
@@ -195,15 +152,8 @@ public class EmployeeServiceImpl implements EmployeeService {
       employee.updateProfileImage(profile);
     }
 
-    employeeHistoryService.createEmployeeHistory(
-        new EmployeeHistoryCreateRequest(HistoryType.UPDATED, employee.getEmployeeNumber(), diffs, null),
-        ipAddress
-    );
-
     return toDto(employee);
   }
-
-
 
   @Override
   public EmployeeDto findEmployee(Long id) {
@@ -249,25 +199,17 @@ public class EmployeeServiceImpl implements EmployeeService {
 
   @Override
   @Transactional
-  public void deleteEmployee(Long id, String ipAddress) {
-    Employee employee = employeeRepository.findById(id)
-        .orElseThrow(() -> new NoSuchElementException("해당 직원을 찾을 수 없습니다: " + id));
-
-    String employeeNumber = employee.getEmployeeNumber();
-
-    if (employee.getProfileImage() != null) {
-      Long profileId = employee.getProfileImage().getId();
-      if (fileStorageService.exists(profileId)) {
-        fileStorageService.delete(profileId);
-      }
+  public void deleteEmployee(Long id) {
+    if (!employeeRepository.existsById(id)) {
+      throw new NoSuchElementException("해당 직원을 찾을 수 없습니다: " + id);
     }
 
-    employeeRepository.delete(employee);
+    Long profileId = employeeRepository.findById(id).get().getProfileImage().getId();
 
-    employeeHistoryService.createEmployeeHistory(
-        new EmployeeHistoryCreateRequest(HistoryType.DELETED, employeeNumber, List.of(), null),
-        ipAddress
-    );
+    employeeRepository.deleteById(id);
+    if (fileStorageService.exists(id)) {
+      fileStorageService.delete(profileId);
+    }
   }
 
   @Override
