@@ -33,7 +33,7 @@ public class DepartmentServiceImpl implements DepartmentService {
   @Transactional
   public DepartmentDto createDepartment(DepartmentCreateRequest request) {
     if (departmentRepository.existsByName(request.name())) {
-      throw new IllegalArgumentException("이미 존재하는 부서 이름입니다");
+      throw new IllegalArgumentException("IllegalArgumentException");
     }
 
     Department department = Department.of(
@@ -54,7 +54,7 @@ public class DepartmentServiceImpl implements DepartmentService {
     if (request.name() != null
         && !request.name().equals(department.getName())) {
       if (departmentRepository.existsByName(request.name())) {
-        throw new IllegalArgumentException("이미 존재하는 부서 이름입니다");
+        throw new IllegalArgumentException("IllegalArgumentException");
       }
     }
 
@@ -142,7 +142,7 @@ public class DepartmentServiceImpl implements DepartmentService {
     Department department = getDepartmentOrThrow(id);
 
     if (employeeRepository.existsByDepartmentId(id)) {
-      throw new IllegalArgumentException("소속 직원이 있는 부서는 삭제할 수 없습니다.");
+      throw new IllegalStateException("소속 직원이 있는 부서는 삭제할 수 없습니다.");
     }
 
     departmentRepository.delete(department);
