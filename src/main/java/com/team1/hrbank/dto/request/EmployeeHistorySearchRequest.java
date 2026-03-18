@@ -1,6 +1,7 @@
 package com.team1.hrbank.dto.request;
 
 import com.team1.hrbank.entity.HistoryType;
+import java.time.Instant;
 import lombok.Builder;
 
 @Builder
@@ -9,8 +10,8 @@ public record EmployeeHistorySearchRequest(
     String type,
     String memo,
     String ipAddress,
-    String atFrom,
-    String atTo,
+    Instant atFrom,
+    Instant atTo,
     Long idAfter,
     Long cursor,
     Integer size,
