@@ -47,14 +47,14 @@ public class Employee extends BaseUpdatableEntity {
   private BinaryContent profileImage;
 
   public static Employee of(String employeeNumber, String name, String email, Department department,
-      String position) {
+      String position, LocalDate hireDate) {
     return Employee.builder()
         .employeeNumber(employeeNumber)
         .name(name)
         .email(email)
         .department(department)
         .position(position)
-        .hireDate(LocalDate.now())
+        .hireDate(hireDate != null ? hireDate : LocalDate.now())
         .status(EmployeeStatus.ACTIVE)
         .build();
   }

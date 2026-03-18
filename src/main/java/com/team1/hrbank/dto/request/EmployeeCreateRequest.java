@@ -10,6 +10,7 @@ public record EmployeeCreateRequest(
     String position,
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     LocalDate hireDate,
-    String jobTitle
+    String jobTitle,
+    String memo
 ) {
 }

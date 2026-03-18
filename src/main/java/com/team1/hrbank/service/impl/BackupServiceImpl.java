@@ -2,7 +2,7 @@ package com.team1.hrbank.service.impl;
 
 import com.team1.hrbank.dto.BackupDownloadDto;
 import com.team1.hrbank.dto.BackupDto;
-import com.team1.hrbank.dto.cursor.CursorPageResponseBackupDto;
+import com.team1.hrbank.dto.cursor.CursorPageResponse;
 import com.team1.hrbank.dto.request.BackupSearchRequest;
 import com.team1.hrbank.entity.Backup;
 import com.team1.hrbank.entity.BackupStatus;
@@ -17,6 +17,8 @@ import com.team1.hrbank.repository.specification.BackupSpecification;
 import com.team1.hrbank.service.BackupService;
 
 import jakarta.persistence.EntityNotFoundException;
+
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -112,7 +114,7 @@ public class BackupServiceImpl implements BackupService {
 
   @Override
   @Transactional(readOnly = true)
-  public CursorPageResponseBackupDto getList(
+  public CursorPageResponse getList(
       String worker,
       Instant startedAtFrom,
       Instant startedAtTo,
@@ -153,7 +155,7 @@ public class BackupServiceImpl implements BackupService {
           : last.getStartedAt().toString();
     }
 
-    return new CursorPageResponseBackupDto(
+    return new CursorPageResponse(
         results.stream().map(backupMapper::toDto).toList(),
         nextCursor,
         nextIdAfter,

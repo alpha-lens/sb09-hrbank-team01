@@ -1,11 +1,13 @@
 package com.team1.hrbank.service.impl;
 
+import com.team1.hrbank.dto.cursor.CursorPageResponse;
 import com.team1.hrbank.dto.DepartmentDto;
-import com.team1.hrbank.dto.cursor.CursorPageResponseDepartmentDto;
 import com.team1.hrbank.dto.request.DepartmentCreateRequest;
 import com.team1.hrbank.dto.request.DepartmentSearchRequest;
 import com.team1.hrbank.dto.request.DepartmentUpdateRequest;
 import com.team1.hrbank.entity.Department;
+import com.team1.hrbank.entity.Employee;
+import com.team1.hrbank.entity.EmployeeStatus;
 import com.team1.hrbank.global.ResourceNotFoundException;
 import com.team1.hrbank.repository.DepartmentRepository;
 import com.team1.hrbank.repository.EmployeeRepository;
@@ -76,7 +78,7 @@ public class DepartmentServiceImpl implements DepartmentService {
   }
 
   @Override
-  public CursorPageResponseDepartmentDto findAllDepartments(DepartmentSearchRequest request) {
+  public CursorPageResponse<DepartmentDto> findAllDepartments(DepartmentSearchRequest request) {
 
     int limit = (request.size() != null && request.size() > 0) ? request.size() : 10;
     // 1. 정렬 기준 세팅
@@ -104,10 +106,6 @@ public class DepartmentServiceImpl implements DepartmentService {
     long totalElements = departmentRepository.count(DepartmentSpecification.filterBy(request, null)
     );
 
-    if (contentEntities.isEmpty()) {
-      return new CursorPageResponseDepartmentDto(List.of(), null, 0L, limit, totalElements, false);
-    }
-
     List<Long> departmentIds = contentEntities.stream().map(Department::getId).toList();
     List<Object[]> countResults = employeeRepository.countByDepartmentIds(departmentIds);
     Map<Long, Long> employeeCountMap = countResults.stream()
@@ -123,16 +121,8 @@ public class DepartmentServiceImpl implements DepartmentService {
         })
         .toList();
 
-    long nextIdAfter = 0L;
-    String nextCursor = null;
-    if (hasNext) {
-      Department lastItem = contentEntities.get(contentEntities.size() - 1);
-      nextIdAfter = lastItem.getId();
-      nextCursor = String.valueOf(nextIdAfter);
-    }
-
-    return new CursorPageResponseDepartmentDto(
-        content, nextCursor, nextIdAfter, limit, totalElements, hasNext
+    return CursorPageResponse.of(
+        content, limit, totalElements, DepartmentDto::id
     );
   }
 
@@ -141,8 +131,14 @@ public class DepartmentServiceImpl implements DepartmentService {
   public void deleteDepartment(Long id) {
     Department department = getDepartmentOrThrow(id);
 
-    if (employeeRepository.existsByDepartmentId(id)) {
+    if (employeeRepository.existsByDepartmentIdAndNotResigned(id)) {
       throw new IllegalStateException("소속 직원이 있는 부서는 삭제할 수 없습니다.");
+    }
+
+    // RESIGNED 직원은 부서 삭제 전에 함께 삭제
+    List<Employee> resignedEmployees = employeeRepository.findByDepartmentIdAndStatus(id, EmployeeStatus.RESIGNED);
+    if (!resignedEmployees.isEmpty()) {
+      employeeRepository.deleteAll(resignedEmployees);
     }
 
     departmentRepository.delete(department);

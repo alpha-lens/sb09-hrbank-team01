@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.team1.hrbank.dto.DiffDto;
 import com.team1.hrbank.dto.EmployeeHistoryDetailDto;
 import com.team1.hrbank.dto.EmployeeHistoryDto;
-import com.team1.hrbank.dto.cursor.CursorPageResponseEmployeeHistoryDto;
+import com.team1.hrbank.dto.cursor.CursorPageResponse;
 import com.team1.hrbank.dto.request.EmployeeHistoryCreateRequest;
 import com.team1.hrbank.dto.request.EmployeeHistorySearchRequest;
 import com.team1.hrbank.entity.EmployeeHistory;
@@ -72,8 +72,7 @@ public class EmployeeHistoryServiceImpl implements EmployeeHistoryService {
   }
 
   @Override
-  public CursorPageResponseEmployeeHistoryDto findEmployeeHistories(EmployeeHistorySearchRequest request)
-  {
+  public CursorPageResponse<EmployeeHistoryDto> findEmployeeHistories(EmployeeHistorySearchRequest request) {
     Long cursorId = 0L;
     if (request.cursor() != null) {
       cursorId = request.cursor();
@@ -83,70 +82,37 @@ public class EmployeeHistoryServiceImpl implements EmployeeHistoryService {
 
     String sortField = "at".equals(request.sortField()) ? "createdAt" : "ipAddress";
 
-    // sortDirection: "asc" 또는 "desc"
     Sort.Direction direction = Sort.Direction.fromString(
         request.sortDirection() != null ? request.sortDirection() : "desc"
     );
 
-    Pageable pageable = PageRequest.of(0, request.size() + 1,
-        Sort.by(direction, sortField));
+    Pageable pageable = PageRequest.of(0, request.size() + 1, Sort.by(direction, sortField));
 
-    // type 변환: "ALL" 또는 빈문자열이면 null (전체 조회)
-    HistoryType historyType = null;
-    if (request.type() != null && !request.type().isBlank() && !"ALL".equalsIgnoreCase(request.type())) {
-      historyType = HistoryType.valueOf(request.type().toUpperCase());
-    }
+    List<EmployeeHistory> histories = employeeHistoryRepository.findHistoriesWithConditions(
+        request.employeeNumber(),
+        request.memo(),
+        request.ipAddress(),
+        request.historyType(),
+        request.atFrom(),
+        request.atTo(),
+        cursorId,
+        pageable
+    );
 
-    // 1 조회
-    List<EmployeeHistory> histories =
-        employeeHistoryRepository.findHistoriesWithConditions(
-            request.employeeNumber(),
-            request.memo(),
-            request.ipAddress(),
-            historyType,
-            request.atFrom(),
-            request.atTo(),
-            cursorId,
-            pageable
-        );
-
-    boolean hasNext = histories.size() > request.size();
-    List<EmployeeHistory> content = hasNext
-        ? histories.subList(0, request.size())
-        : histories;
-
-    // 다음 페이지 커서 = 현재 페이지 마지막 요소의 id
-    Long nextCursor = null;
-    Long nextIdAfter = null;
-    if (hasNext && !content.isEmpty()) {
-      EmployeeHistory last = content.get(content.size() - 1);
-      nextCursor = last.getId();
-      nextIdAfter = last.getId();
-    }
-
-    // DTO 변환
-    List<EmployeeHistoryDto> dtoContent = content.stream()
-        .map(employeeHistoryMapper::toDto)
-        .toList();
-
-    // 전체 건수
     long total = employeeHistoryRepository.countByConditions(
         request.employeeNumber(),
         request.memo(),
         request.ipAddress(),
-        historyType,
+        request.historyType(),
         request.atFrom(),
         request.atTo()
     );
 
-    return new CursorPageResponseEmployeeHistoryDto(
-        dtoContent,
-        nextCursor,
-        nextIdAfter,
-        request.size(),
-        total,
-        hasNext
-    );
+    List<EmployeeHistoryDto> dtoList = histories.stream()
+        .map(employeeHistoryMapper::toDto)
+        .toList();
+
+    return CursorPageResponse.of(dtoList, request.size(), total, EmployeeHistoryDto::id);
   }
 
   // List<DiffDto> → JSON 문자열 (저장할 때 사용)

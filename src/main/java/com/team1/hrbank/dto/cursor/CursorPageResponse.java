@@ -1,4 +1,4 @@
-package com.team1.hrbank.dto;
+package com.team1.hrbank.dto.cursor;
 
 import java.util.List;
 import java.util.function.Function;

@@ -1,7 +1,8 @@
 package com.team1.hrbank.controller;
 
 import com.team1.hrbank.dto.EmployeeHistoryDetailDto;
-import com.team1.hrbank.dto.cursor.CursorPageResponseEmployeeHistoryDto;
+import com.team1.hrbank.dto.EmployeeHistoryDto;
+import com.team1.hrbank.dto.cursor.CursorPageResponse;
 import com.team1.hrbank.dto.request.EmployeeHistoryCreateRequest;
 import com.team1.hrbank.dto.request.EmployeeHistorySearchRequest;
 import com.team1.hrbank.service.EmployeeHistoryService;
@@ -10,7 +11,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -52,8 +56,8 @@ public class EmployeeHistoryController {
       }
   )
   @GetMapping
-  public ResponseEntity<CursorPageResponseEmployeeHistoryDto> findEmployeeHistories(
-      @ModelAttribute EmployeeHistorySearchRequest request) {
+  public ResponseEntity<CursorPageResponse<EmployeeHistoryDto>> findEmployeeHistories(
+      @ParameterObject @ModelAttribute EmployeeHistorySearchRequest request) {
     return ResponseEntity.ok(
         employeeHistoryService.findEmployeeHistories(request)
     );
@@ -80,12 +84,24 @@ public class EmployeeHistoryController {
   )
   @GetMapping("/count")
   public ResponseEntity<Long> findEmployeeHistoriesByRevisionsBetween(
-      @RequestParam(required = false) Instant fromDate,
-      @RequestParam(required = false) Instant toDate
+      @RequestParam(required = false) String fromDate,
+      @RequestParam(required = false) String toDate
   ) {
     return ResponseEntity.ok(
-        employeeHistoryService.countEmployeeHistories(fromDate, toDate)
+        employeeHistoryService.countEmployeeHistories(
+            parseInstant(fromDate), parseInstant(toDate))
     );
+  }
+
+  private Instant parseInstant(String dateStr) {
+    if (dateStr == null || dateStr.isBlank()) {
+      return null;
+    }
+    try {
+      return Instant.parse(dateStr);
+    } catch (Exception e) {
+      return LocalDateTime.parse(dateStr).toInstant(ZoneOffset.UTC);
+    }
   }
 
 }
