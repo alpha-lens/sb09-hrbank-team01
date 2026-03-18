@@ -66,8 +66,8 @@ public class EmployeeHistoryServiceImpl implements EmployeeHistoryService {
   @Override
   public long countEmployeeHistories(Instant fromDate, Instant toDate) {
 
-    Instant from = fromDate != null ? fromDate : Instant.now().minus(7, ChronoUnit.DAYS);
-    Instant to = toDate != null ? toDate : Instant.now();
+    Instant from = fromDate != null ? fromDate : Instant.EPOCH;
+    Instant to = toDate != null ? toDate : Instant.now().plus(1, ChronoUnit.DAYS);
 
     return employeeHistoryRepository.countByCreatedAtBetween(from, to);
   }

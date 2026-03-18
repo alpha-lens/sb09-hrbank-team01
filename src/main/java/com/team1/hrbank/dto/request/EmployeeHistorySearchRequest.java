@@ -13,12 +13,12 @@ public record EmployeeHistorySearchRequest(
     Instant atTo,
     Long idAfter,
     Long cursor,
-    int size,
+    Integer size,
     String sortField,
     String sortDirection
 ) {
   public EmployeeHistorySearchRequest {
-    if (size <= 0)
+    if (size == null || size <= 0)
       size = 10;
     if (sortField == null)
       sortField = "at";

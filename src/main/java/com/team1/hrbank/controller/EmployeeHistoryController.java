@@ -10,6 +10,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -79,12 +81,24 @@ public class EmployeeHistoryController {
   )
   @GetMapping("/count")
   public ResponseEntity<Long> findEmployeeHistoriesByRevisionsBetween(
-      @RequestParam(required = false) Instant fromDate,
-      @RequestParam(required = false) Instant toDate
+      @RequestParam(required = false) String fromDate,
+      @RequestParam(required = false) String toDate
   ) {
     return ResponseEntity.ok(
-        employeeHistoryService.countEmployeeHistories(fromDate, toDate)
+        employeeHistoryService.countEmployeeHistories(
+            parseInstant(fromDate), parseInstant(toDate))
     );
+  }
+
+  private Instant parseInstant(String dateStr) {
+    if (dateStr == null || dateStr.isBlank()) {
+      return null;
+    }
+    try {
+      return Instant.parse(dateStr);
+    } catch (Exception e) {
+      return LocalDateTime.parse(dateStr).toInstant(ZoneOffset.UTC);
+    }
   }
 
 }
