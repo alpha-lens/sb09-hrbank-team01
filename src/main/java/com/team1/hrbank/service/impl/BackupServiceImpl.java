@@ -1,5 +1,6 @@
 package com.team1.hrbank.service.impl;
 
+import com.team1.hrbank.dto.BackupDownloadDto;
 import com.team1.hrbank.dto.BackupDto;
 import com.team1.hrbank.dto.cursor.CursorPageResponseBackupDto;
 import com.team1.hrbank.dto.request.BackupSearchRequest;
@@ -9,17 +10,39 @@ import com.team1.hrbank.entity.BinaryContent;
 import com.team1.hrbank.entity.Employee;
 import com.team1.hrbank.mapper.BackupMapper;
 import com.team1.hrbank.repository.BackupRepository;
-import com.team1.hrbank.repository.specification.BackupSpecification;
 import com.team1.hrbank.repository.BinaryContentRepository;
 import com.team1.hrbank.repository.EmployeeRepository;
+import com.team1.hrbank.repository.specification.BackupSpecification;
 import com.team1.hrbank.service.BackupService;
+
+import jakarta.persistence.EntityNotFoundException;
+
+import java.nio.charset.StandardCharsets;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import java.nio.file.Path;
+
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.time.Instant;
@@ -27,20 +50,11 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
-import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.domain.Specification;
-import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
-@Transactional(readOnly = true)
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class BackupServiceImpl implements BackupService {
 
   private final BackupRepository backupRepository;
@@ -56,6 +70,7 @@ public class BackupServiceImpl implements BackupService {
 
   // 백업 실행
   @Override
+  @Transactional(propagation = Propagation.NOT_SUPPORTED)
   public BackupDto runBackup(String worker) {
 
     // 백업 필요 여부 판단
@@ -80,8 +95,9 @@ public class BackupServiceImpl implements BackupService {
 
       // 성공 처리
       backup.complete(csvFile);
+      BackupDto result = backupMapper.toDto(backupRepository.save(backup));
       log.info("[Backup] 완료 id={}, file={}", backup.getId(), tempFilePath);
-      return backupMapper.toDto(backupRepository.save(backup));
+      return result;
 
     } catch (Exception e) {
       log.error("[Backup] 실패 id={}", backup.getId(), e);
@@ -135,9 +151,11 @@ public class BackupServiceImpl implements BackupService {
     long totalElements = backupRepository.count(
         BackupSpecification.findByCondition(countReq));
 
+    hasNext = hasNext && results.size() < totalElements;
+
     // 다음 커서 계산
     String nextCursor = null;
-    long nextIdAfter = 0L;
+    Long nextIdAfter = null;
 
     if (hasNext && !results.isEmpty()) {
       Backup last = results.get(results.size() - 1);
@@ -200,7 +218,7 @@ public class BackupServiceImpl implements BackupService {
 
       do {
         Pageable pageable = PageRequest.of(page++, chunkSize, Sort.by("id"));
-        chunk = employeeRepository.findAll(pageable);
+        chunk = employeeRepository.findAllWithDepartment(pageable);
 
         for (Employee emp : chunk.getContent()) {
           writer.write(toCsvRow(emp));
@@ -282,5 +300,31 @@ public class BackupServiceImpl implements BackupService {
         log.warn("[Backup] 임시 파일 삭제 실패: {}", filePath, e);
       }
     }
+  }
+  @Override
+  @Transactional(readOnly = true)
+  public BackupDto getLatest() {
+    return backupRepository
+        .findTopByStatusOrderByStartedAtDesc(BackupStatus.COMPLETED)
+        .map(backupMapper::toDto)
+        .orElse(null);
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public BackupDownloadDto getDownloadInfo(Long id) {
+    Backup backup = backupRepository.findById(id)
+        .orElseThrow(() -> new EntityNotFoundException("백업을 찾을 수 없습니다."));
+
+    if (backup.getBackupFile() == null) {
+      return null;
+    }
+
+    BinaryContent file = backup.getBackupFile();
+    return new BackupDownloadDto(
+        file.getFileName(),
+        file.getContentType(),
+        file.getFilePath()
+    );
   }
 }
