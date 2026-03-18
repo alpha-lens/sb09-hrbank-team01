@@ -33,13 +33,6 @@ import org.springframework.web.multipart.MultipartFile;
 @RequestMapping("/api/employees")
 @RequiredArgsConstructor
 public class EmployeeController {
-
-  /* TEST 필요한 부분
-   * 1. ModelAttribute를 통해 DTO로 잘 들어오는가?
-   * 2. 각 컨트롤러는 잘 작동하는가?
-   * 3. 대시보드는 잘 되는가?
-   * */
-
   private final EmployeeService employeeService;
 
   @GetMapping
@@ -57,21 +50,16 @@ public class EmployeeController {
   @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<EmployeeDto> createEmployee(
       @RequestPart("employee") EmployeeCreateRequest employeeCreateRequest,
-      @RequestPart(value = "profile", required = false) MultipartFile profileImage,
-      HttpServletRequest httpRequest
+      @RequestPart(required = false) MultipartFile profile
   ) throws IOException {
-    String ipAddress = httpRequest.getRemoteAddr();
-    return ResponseEntity.status(HttpStatus.CREATED)
-        .body(employeeService.createEmployee(employeeCreateRequest, profileImage, ipAddress));
+    return ResponseEntity.status(HttpStatus.CREATED).body(employeeService.createEmployee(employeeCreateRequest, profile));
   }
 
-  @PatchMapping("/{id}")
+  @PatchMapping(path = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public EmployeeDto updateEmployee(@PathVariable long id,
       @RequestPart("employee") EmployeeUpdateRequest employeeUpdateRequest,
-      @RequestPart(required = false) MultipartFile profileImage,
-      HttpServletRequest httpRequest) throws IOException {
-    String ipAddress = httpRequest.getRemoteAddr();
-    return employeeService.updateEmployee(id, employeeUpdateRequest, profileImage, ipAddress);
+      @RequestPart(required = false) MultipartFile profile) throws IOException {
+    return employeeService.updateEmployee(id, employeeUpdateRequest, profile);
   }
 
   @DeleteMapping("/{id}")

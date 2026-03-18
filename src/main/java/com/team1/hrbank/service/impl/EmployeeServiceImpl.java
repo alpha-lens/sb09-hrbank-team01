@@ -201,6 +201,11 @@ public class EmployeeServiceImpl implements EmployeeService {
     );
 
     if (profileImage != null && !profileImage.isEmpty()) {
+      if (employee.getProfileImage() != null) {
+        fileStorageService.delete(employee.getProfileImage().getId());
+        binaryContentRepository.delete(employee.getProfileImage());
+      }
+
       BinaryContent profile = saveProfileImage(profileImage);
       binaryContentRepository.save(profile);
       fileStorageService.save(profile.getId(), profileImage.getBytes());
