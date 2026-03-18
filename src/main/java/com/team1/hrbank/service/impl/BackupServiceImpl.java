@@ -34,6 +34,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.BufferedWriter;
@@ -53,6 +54,7 @@ import java.util.Optional;
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class BackupServiceImpl implements BackupService {
 
   private final BackupRepository backupRepository;
@@ -68,6 +70,7 @@ public class BackupServiceImpl implements BackupService {
 
   // 백업 실행
   @Override
+  @Transactional(propagation = Propagation.NOT_SUPPORTED)
   public BackupDto runBackup(String worker) {
 
     // 백업 필요 여부 판단
@@ -92,9 +95,8 @@ public class BackupServiceImpl implements BackupService {
 
       // 성공 처리
       backup.complete(csvFile);
-      log.info("[Backup] save 직전 status={}", backup.getStatus());
       BackupDto result = backupMapper.toDto(backupRepository.save(backup));
-      log.info("[Backup] save 완료 id={}", backup.getId());
+      log.info("[Backup] 완료 id={}, file={}", backup.getId(), tempFilePath);
       return result;
 
     } catch (Exception e) {

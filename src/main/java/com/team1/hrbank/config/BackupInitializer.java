@@ -1,4 +1,4 @@
-package com.team1.hrbank;
+package com.team1.hrbank.config;
 
 import com.team1.hrbank.entity.BackupStatus;
 import com.team1.hrbank.repository.BackupRepository;

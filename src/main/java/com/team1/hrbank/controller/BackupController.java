@@ -123,6 +123,13 @@ public class BackupController {
   @GetMapping("/latest")
   @Operation(summary = "최신 백업 조회")
   public ResponseEntity<BackupDto> getLatest() {
-    return ResponseEntity.ok(backupService.getLatest());
+    BackupDto latest = backupService.getLatest();
+
+    // null이면 204 No Content 반환
+    if (latest == null) {
+      return ResponseEntity.noContent().build();
+    }
+
+    return ResponseEntity.ok(latest);
   }
 }
