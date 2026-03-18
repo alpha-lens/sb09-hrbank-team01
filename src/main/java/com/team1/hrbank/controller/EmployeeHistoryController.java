@@ -52,8 +52,8 @@ public class EmployeeHistoryController {
       }
   )
   @GetMapping
-  public ResponseEntity<CursorPageResponseEmployeeHistoryDto> findEmployeeHistories(@ModelAttribute
-    EmployeeHistorySearchRequest request) {
+  public ResponseEntity<CursorPageResponseEmployeeHistoryDto> findEmployeeHistories(
+      @ModelAttribute EmployeeHistorySearchRequest request) {
     return ResponseEntity.ok(
         employeeHistoryService.findEmployeeHistories(request)
     );
