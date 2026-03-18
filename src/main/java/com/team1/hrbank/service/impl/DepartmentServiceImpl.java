@@ -1,7 +1,7 @@
 package com.team1.hrbank.service.impl;
 
+import com.team1.hrbank.dto.cursor.CursorPageResponse;
 import com.team1.hrbank.dto.DepartmentDto;
-import com.team1.hrbank.dto.cursor.CursorPageResponseDepartmentDto;
 import com.team1.hrbank.dto.request.DepartmentCreateRequest;
 import com.team1.hrbank.dto.request.DepartmentSearchRequest;
 import com.team1.hrbank.dto.request.DepartmentUpdateRequest;
@@ -76,7 +76,7 @@ public class DepartmentServiceImpl implements DepartmentService {
   }
 
   @Override
-  public CursorPageResponseDepartmentDto findAllDepartments(DepartmentSearchRequest request) {
+  public CursorPageResponse<DepartmentDto> findAllDepartments(DepartmentSearchRequest request) {
 
     int limit = (request.size() != null && request.size() > 0) ? request.size() : 10;
     // 1. 정렬 기준 세팅
@@ -104,10 +104,6 @@ public class DepartmentServiceImpl implements DepartmentService {
     long totalElements = departmentRepository.count(DepartmentSpecification.filterBy(request, null)
     );
 
-    if (contentEntities.isEmpty()) {
-      return new CursorPageResponseDepartmentDto(List.of(), null, 0L, limit, totalElements, false);
-    }
-
     List<Long> departmentIds = contentEntities.stream().map(Department::getId).toList();
     List<Object[]> countResults = employeeRepository.countByDepartmentIds(departmentIds);
     Map<Long, Long> employeeCountMap = countResults.stream()
@@ -123,16 +119,8 @@ public class DepartmentServiceImpl implements DepartmentService {
         })
         .toList();
 
-    long nextIdAfter = 0L;
-    String nextCursor = null;
-    if (hasNext) {
-      Department lastItem = contentEntities.get(contentEntities.size() - 1);
-      nextIdAfter = lastItem.getId();
-      nextCursor = String.valueOf(nextIdAfter);
-    }
-
-    return new CursorPageResponseDepartmentDto(
-        content, nextCursor, nextIdAfter, limit, totalElements, hasNext
+    return CursorPageResponse.of(
+        content, limit, totalElements, DepartmentDto::id
     );
   }
 
