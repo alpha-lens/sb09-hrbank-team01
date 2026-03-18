@@ -21,5 +21,9 @@ public record EmployeeSearchRequest(
   public EmployeeSearchRequest {
     if (size == null) size = 10;
     if (sortDirection == null) sortDirection = "asc";
+
+    if(idAfter == null && cursor != null && !cursor.isBlank()) {
+      idAfter = Long.parseLong(cursor);
+    }
   }
 }
