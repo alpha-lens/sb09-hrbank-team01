@@ -31,7 +31,6 @@ public class EmployeeHistoryServiceImpl implements EmployeeHistoryService {
 
   private final EmployeeHistoryRepository employeeHistoryRepository;
   private final EmployeeHistoryMapper employeeHistoryMapper;
-  @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
   private final ObjectMapper objectMapper;
 
   @Override
@@ -91,9 +90,6 @@ public class EmployeeHistoryServiceImpl implements EmployeeHistoryService {
     Pageable pageable = PageRequest.of(0, request.size() + 1,
         Sort.by(direction, sortField));
 
-    String atFrom = (request.atFrom() == null || request.atFrom().isBlank()) ? null : request.atFrom();
-    String atTo   = (request.atTo()   == null || request.atTo().isBlank())   ? null : request.atTo();
-
     // 1 조회
     List<EmployeeHistory> histories =
         employeeHistoryRepository.findHistoriesWithConditions(
@@ -101,8 +97,8 @@ public class EmployeeHistoryServiceImpl implements EmployeeHistoryService {
             request.memo(),
             request.ipAddress(),
             request.historyType(),
-            atFrom,
-            atTo,
+            request.atFrom(),
+            request.atTo(),
             cursorId,
             pageable
         );
@@ -132,8 +128,8 @@ public class EmployeeHistoryServiceImpl implements EmployeeHistoryService {
         request.memo(),
         request.ipAddress(),
         request.historyType(),
-        atFrom,
-        atTo
+        request.atFrom(),
+        request.atTo()
     );
 
     return new CursorPageResponseEmployeeHistoryDto(
