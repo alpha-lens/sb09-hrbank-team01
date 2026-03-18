@@ -1,7 +1,7 @@
 package com.team1.hrbank.service;
 
+import com.team1.hrbank.dto.cursor.CursorPageResponse;
 import com.team1.hrbank.dto.DepartmentDto;
-import com.team1.hrbank.dto.cursor.CursorPageResponseDepartmentDto;
 import com.team1.hrbank.dto.request.DepartmentCreateRequest;
 import com.team1.hrbank.dto.request.DepartmentSearchRequest;
 import com.team1.hrbank.dto.request.DepartmentUpdateRequest;
@@ -14,7 +14,7 @@ public interface DepartmentService {
 
   DepartmentDto findDepartment(Long id);
 
-  CursorPageResponseDepartmentDto findAllDepartments(DepartmentSearchRequest request);
+  CursorPageResponse<DepartmentDto> findAllDepartments(DepartmentSearchRequest request);
 
   void deleteDepartment(Long id);
 
