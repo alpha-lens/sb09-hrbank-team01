@@ -1,7 +1,7 @@
 package com.team1.hrbank.service;
 
+import com.team1.hrbank.dto.CursorPageResponse;
 import com.team1.hrbank.dto.EmployeeDto;
-import com.team1.hrbank.dto.cursor.CursorPageResponseEmployeeDto;
 import com.team1.hrbank.dto.dashboard.EmployeeDistributionDto;
 import com.team1.hrbank.dto.dashboard.EmployeeTrendDto;
 import com.team1.hrbank.dto.request.EmployeeCreateRequest;
@@ -17,17 +17,17 @@ import org.springframework.web.multipart.MultipartFile;
 
 public interface EmployeeService {
 
-  EmployeeDto createEmployee(EmployeeCreateRequest request, MultipartFile profileImage)
+  EmployeeDto createEmployee(EmployeeCreateRequest request, MultipartFile profileImage, String ipAddress)
       throws IOException;
 
-  EmployeeDto updateEmployee(Long id, EmployeeUpdateRequest request, MultipartFile profileImage)
+  EmployeeDto updateEmployee(Long id, EmployeeUpdateRequest request, MultipartFile profileImage, String ipAddress)
       throws IOException;
 
   EmployeeDto findEmployee(Long id);
 
-  CursorPageResponseEmployeeDto findAllEmployees(EmployeeSearchRequest request);
+  CursorPageResponse findAllEmployees(EmployeeSearchRequest request);
 
-  void deleteEmployee(Long id);
+  void deleteEmployee(Long id, String ipAddress);
 
   List<EmployeeTrendDto> findEmployeeTrend(LocalDate startDate, LocalDate endDate, EmployeeTrendTimeUnit unit);
 
