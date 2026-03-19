@@ -27,11 +27,11 @@ public interface EmployeeHistoryRepository extends JpaRepository<EmployeeHistory
                 OR h.memo LIKE %:memo%)
           AND (:ipAddress IS NULL OR :ipAddress = ''
                 OR h.ipAddress LIKE %:ipAddress%)
-          AND (:type IS NULL
+          AND (CAST(:type AS text) IS NULL
                 OR h.type = :type)
-          AND (:atFrom IS NULL
+          AND (CAST(:atFrom AS timestamp) IS NULL
                 OR h.createdAt >= :atFrom)
-          AND (:atTo IS NULL
+          AND (CAST(:atTo AS timestamp) IS NULL
                 OR h.createdAt <= :atTo)
           AND (:idBefore = 0L OR h.id < :idBefore)
         """)
@@ -55,14 +55,13 @@ public interface EmployeeHistoryRepository extends JpaRepository<EmployeeHistory
             OR h.memo LIKE %:memo%)
       AND (:ipAddress IS NULL OR :ipAddress = ''
             OR h.ipAddress LIKE %:ipAddress%)
-      AND (:type IS NULL
+      AND (CAST(:type AS text) IS NULL
             OR h.type = :type)
-      AND (:atFrom IS NULL
+      AND (CAST(:atFrom AS timestamp) IS NULL
             OR h.createdAt >= :atFrom)
-      AND (:atTo IS NULL
+      AND (CAST(:atTo AS timestamp) IS NULL
             OR h.createdAt <= :atTo)
     """)
-    // idBefore는 카운트에서 제외
   long countByConditions(
       @Param("employeeNumber") String employeeNumber,
       @Param("memo") String memo,
