@@ -65,24 +65,46 @@ public class BackupController {
       @RequestParam(required = false) Instant startedAtTo,
       @RequestParam(required = false) BackupStatus status,
       @RequestParam(defaultValue = "startedAt") String sortField,
-      @RequestParam(required = false) Long lastId,
+      @RequestParam(required = false) Long idAfter,
+      @RequestParam(required = false) String cursor,
       @RequestParam(defaultValue = "10") int size) {
 
     return ResponseEntity.ok(backupService.getList(
-        worker, startedAtFrom, startedAtTo, status, sortField, lastId, size));
+        worker, startedAtFrom, startedAtTo, status, sortField, idAfter, size));
   }
 
   /* ── 요청자 IP 추출 ───────────────────────────────────── */
   private String resolveClientIp(HttpServletRequest request) {
     String ip = request.getHeader("X-Forwarded-For");
     if (StringUtils.hasText(ip)) {
-      return ip.split(",")[0].trim();
+      ip = ip.split(",")[0].trim();
+    } else {
+      ip = request.getRemoteAddr();
     }
-    String remoteAddr = request.getRemoteAddr();
-    if ("0:0:0:0:0:0:0:1".equals(remoteAddr) || "::1".equals(remoteAddr)) {
-      return "127.0.0.1";
+    if ("0:0:0:0:0:0:0:1".equals(ip) || "::1".equals(ip) || "127.0.0.1".equals(ip)) {
+      ip = getLocalIp();
     }
-    return remoteAddr;
+    return ip;
+  }
+
+  private String getLocalIp() {
+    try {
+      java.util.Enumeration<java.net.NetworkInterface> interfaces = java.net.NetworkInterface.getNetworkInterfaces();
+      while (interfaces.hasMoreElements()) {
+        java.net.NetworkInterface ni = interfaces.nextElement();
+        if (ni.isLoopback() || ni.isVirtual() || !ni.isUp()) continue;
+        java.util.Enumeration<java.net.InetAddress> addresses = ni.getInetAddresses();
+        while (addresses.hasMoreElements()) {
+          java.net.InetAddress addr = addresses.nextElement();
+          if (addr instanceof java.net.Inet4Address && !addr.isLoopbackAddress()) {
+            return addr.getHostAddress();
+          }
+        }
+      }
+    } catch (java.net.SocketException e) {
+      // ignore
+    }
+    return "127.0.0.1";
   }
 
   @GetMapping("/{id}/download")

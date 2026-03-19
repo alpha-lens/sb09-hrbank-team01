@@ -52,7 +52,7 @@ public class EmployeeController {
       @RequestPart("employee") EmployeeCreateRequest employeeCreateRequest,
       @RequestPart(required = false) MultipartFile profile, HttpServletRequest httpRequest
   ) throws IOException {
-    String ipAddress = httpRequest.getRemoteAddr();
+    String ipAddress = resolveIpAddress(httpRequest);
     return ResponseEntity.status(HttpStatus.CREATED).body(employeeService.createEmployee(employeeCreateRequest, profile, ipAddress));
   }
 
@@ -61,14 +61,47 @@ public class EmployeeController {
       @RequestPart("employee") EmployeeUpdateRequest employeeUpdateRequest,
       @RequestPart(required = false) MultipartFile profile, HttpServletRequest httpRequest)
       throws IOException {
-    String ipAddress = httpRequest.getRemoteAddr();
+    String ipAddress = resolveIpAddress(httpRequest);
     return employeeService.updateEmployee(id, employeeUpdateRequest, profile, ipAddress);
   }
 
   @DeleteMapping("/{id}")
   public void deleteEmployee(@PathVariable long id, HttpServletRequest httpRequest) {
-    String ipAddress = httpRequest.getRemoteAddr();
+    String ipAddress = resolveIpAddress(httpRequest);
     employeeService.deleteEmployee(id, ipAddress);
+  }
+
+  private String resolveIpAddress(HttpServletRequest request) {
+    String ip = request.getHeader("X-Forwarded-For");
+    if (ip != null && !ip.isBlank()) {
+      ip = ip.split(",")[0].trim();
+    } else {
+      ip = request.getRemoteAddr();
+    }
+    if ("0:0:0:0:0:0:0:1".equals(ip) || "::1".equals(ip) || "127.0.0.1".equals(ip)) {
+      ip = getLocalIp();
+    }
+    return ip;
+  }
+
+  private String getLocalIp() {
+    try {
+      java.util.Enumeration<java.net.NetworkInterface> interfaces = java.net.NetworkInterface.getNetworkInterfaces();
+      while (interfaces.hasMoreElements()) {
+        java.net.NetworkInterface ni = interfaces.nextElement();
+        if (ni.isLoopback() || ni.isVirtual() || !ni.isUp()) continue;
+        java.util.Enumeration<java.net.InetAddress> addresses = ni.getInetAddresses();
+        while (addresses.hasMoreElements()) {
+          java.net.InetAddress addr = addresses.nextElement();
+          if (addr instanceof java.net.Inet4Address && !addr.isLoopbackAddress()) {
+            return addr.getHostAddress();
+          }
+        }
+      }
+    } catch (java.net.SocketException e) {
+      // ignore
+    }
+    return "127.0.0.1";
   }
 
   @GetMapping("/stats/trend")

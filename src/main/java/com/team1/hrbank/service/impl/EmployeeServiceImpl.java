@@ -165,7 +165,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     }
 
     if (employeeRepository.existsByEmail(request.email())) {
-      throw new IllegalArgumentException("IllegalArgumentException");
+      throw new IllegalArgumentException("이미 사용 중인 이메일입니다: " + request.email());
     }
 
     String prefix = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyyMM"));
@@ -186,10 +186,21 @@ public class EmployeeServiceImpl implements EmployeeService {
       employee.updateProfileImage(profile);
     }
 
-    EmployeeDto saved = toDto(employeeRepository.save(employee));
+    Employee savedEntity = employeeRepository.save(employee);
+    EmployeeDto saved = toDto(savedEntity);
+
+    List<DiffDto> diffs = List.of(
+        new DiffDto("employeeNumber", "", saved.employeeNumber()),
+        new DiffDto("name", "", saved.name()),
+        new DiffDto("email", "", saved.email()),
+        new DiffDto("department", "", saved.departmentName()),
+        new DiffDto("position", "", saved.position()),
+        new DiffDto("hireDate", "", saved.hireDate().toString()),
+        new DiffDto("status", "", savedEntity.getStatus().name())
+    );
 
     employeeHistoryService.createEmployeeHistory(
-        new EmployeeHistoryCreateRequest(HistoryType.CREATED, saved.employeeNumber(), List.of(), request.memo()),
+        new EmployeeHistoryCreateRequest(HistoryType.CREATED, saved.employeeNumber(), diffs, request.memo()),
         ipAddress
     );
 
@@ -301,18 +312,27 @@ public class EmployeeServiceImpl implements EmployeeService {
     Employee employee = employeeRepository.findById(id)
         .orElseThrow(() -> new NoSuchElementException("해당 직원을 찾을 수 없습니다: " + id));
 
+    String empNumber = employee.getEmployeeNumber();
+    List<DiffDto> diffs = List.of(
+        new DiffDto("employeeNumber", empNumber, ""),
+        new DiffDto("name", employee.getName(), ""),
+        new DiffDto("email", employee.getEmail(), ""),
+        new DiffDto("department", employee.getDepartment().getName(), ""),
+        new DiffDto("position", employee.getPosition(), ""),
+        new DiffDto("hireDate", employee.getHireDate().toString(), ""),
+        new DiffDto("status", employee.getStatus().name(), "")
+    );
+
     Long profileId = (employee.getProfileImage() != null) ?
         employee.getProfileImage().getId() : null;
     employeeRepository.delete(employee);
-
-    String empNumber = employee.getEmployeeNumber();
 
     if (profileId != null && fileStorageService.exists(profileId)) {
       fileStorageService.delete(profileId);
     }
 
     employeeHistoryService.createEmployeeHistory(
-        new EmployeeHistoryCreateRequest(HistoryType.DELETED, empNumber, List.of(), null),
+        new EmployeeHistoryCreateRequest(HistoryType.DELETED, empNumber, diffs, null),
         ipAddress
     );
   }
@@ -322,7 +342,8 @@ public class EmployeeServiceImpl implements EmployeeService {
       EmployeeTrendTimeUnit unit) {
 
     // 1. 기본값 및 기간 설정 (기존과 동일)
-    LocalDate finalEnd = (endDate != null) ? endDate : LocalDate.now();
+    LocalDate finalEnd = (endDate != null) ? endDate
+        : LocalDate.now().withDayOfMonth(LocalDate.now().lengthOfMonth());
     EmployeeTrendTimeUnit finalUnit = (unit != null) ? unit : EmployeeTrendTimeUnit.MONTH;
     LocalDate finalStart;
     if (startDate != null) {
@@ -414,7 +435,7 @@ public class EmployeeServiceImpl implements EmployeeService {
   @Override
   public long findEmployeeCount(EmployeeStatus status, LocalDate startDate, LocalDate endDate) {
     if (endDate == null) {
-      endDate = LocalDate.now();
+      endDate = LocalDate.now().withDayOfMonth(LocalDate.now().lengthOfMonth());
     }
 
     if (startDate == null) {
