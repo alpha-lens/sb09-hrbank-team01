@@ -2,7 +2,9 @@ package com.team1.hrbank;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
+@EnableScheduling
 @SpringBootApplication
 public class HrbankApplication {
 
@@ -11,3 +13,5 @@ public class HrbankApplication {
   }
 
 }
+
+/// 커밋 테스트용입니다.

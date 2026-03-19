@@ -1,0 +1,75 @@
+package com.team1.hrbank.repository;
+
+import com.team1.hrbank.entity.EmployeeHistory;
+import com.team1.hrbank.entity.HistoryType;
+import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
+public interface EmployeeHistoryRepository extends JpaRepository<EmployeeHistory, Long> {
+
+  long countByCreatedAtBetween(Instant from, Instant to);
+
+  @Query("SELECT MAX(h.id) FROM EmployeeHistory h")
+  Optional<Long> findMaxId();
+
+  // 다중 조건 조회 (JPQL로 직접 작성)
+  @Query("""
+        SELECT h
+        FROM EmployeeHistory h
+        WHERE (:employeeNumber IS NULL OR :employeeNumber = ''
+                OR h.employeeNumber LIKE %:employeeNumber%)
+          AND (:memo IS NULL OR :memo = ''
+                OR h.memo LIKE %:memo%)
+          AND (:ipAddress IS NULL OR :ipAddress = ''
+                OR h.ipAddress LIKE %:ipAddress%)
+          AND (:type IS NULL
+                OR h.type = :type)
+          AND (:atFrom IS NULL
+                OR h.createdAt >= :atFrom)
+          AND (:atTo IS NULL
+                OR h.createdAt <= :atTo)
+          AND (:idBefore = 0L OR h.id < :idBefore)
+        """)
+  List<EmployeeHistory> findHistoriesWithConditions(
+      @Param("employeeNumber") String employeeNumber,
+      @Param("memo") String memo,
+      @Param("ipAddress") String ipAddress,
+      @Param("type") HistoryType type,
+      @Param("atFrom") Instant atFrom,
+      @Param("atTo") Instant atTo,
+      @Param("idBefore") Long idBefore,
+      Pageable pageable
+  );
+
+  @Query("""
+    SELECT COUNT(h)
+    FROM EmployeeHistory h
+    WHERE (:employeeNumber IS NULL OR :employeeNumber = ''
+            OR h.employeeNumber LIKE %:employeeNumber%)
+      AND (:memo IS NULL OR :memo = ''
+            OR h.memo LIKE %:memo%)
+      AND (:ipAddress IS NULL OR :ipAddress = ''
+            OR h.ipAddress LIKE %:ipAddress%)
+      AND (:type IS NULL
+            OR h.type = :type)
+      AND (:atFrom IS NULL
+            OR h.createdAt >= :atFrom)
+      AND (:atTo IS NULL
+            OR h.createdAt <= :atTo)
+    """)
+    // idBefore는 카운트에서 제외
+  long countByConditions(
+      @Param("employeeNumber") String employeeNumber,
+      @Param("memo") String memo,
+      @Param("ipAddress") String ipAddress,
+      @Param("type") HistoryType type,
+      @Param("atFrom") Instant atFrom,
+      @Param("atTo") Instant atTo
+  );
+
+}

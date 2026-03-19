@@ -144,3 +144,26 @@ hs_err_pid*
 replay_pid*
 
 # End of https://www.toptal.com/developers/gitignore/api/java,intellij
+
+# Build output
+build/
+
+# macOS
+.DS_Store
+
+# IntelliJ module files
+*.iml
+
+# Claude
+docs/CLAUDE.md
+/.claude
+
+# File storage
+file-data-map/
+
+# Generated docs
+code-review-report.md
+file-management-guide.md
+file-management-implementation.md
+docs/pagination-convention.md
+docs/

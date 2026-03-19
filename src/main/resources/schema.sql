@@ -4,9 +4,10 @@ CREATE TABLE IF NOT EXISTS departments (
     description       VARCHAR(500),
     established_date  DATE         NOT NULL,
     created_at        TIMESTAMP    NOT NULL DEFAULT now(),
+    updated_at        TIMESTAMP    NOT NULL DEFAULT now(),
 
     CONSTRAINT uk_department_name UNIQUE (name)
-    );
+);
 
 CREATE TABLE IF NOT EXISTS binary_contents (
     id            BIGSERIAL    PRIMARY KEY,
@@ -15,7 +16,7 @@ CREATE TABLE IF NOT EXISTS binary_contents (
     size          BIGINT       NOT NULL,
     file_path     VARCHAR(500) NOT NULL,
     created_at    TIMESTAMP    NOT NULL DEFAULT now()
-    );
+);
 
 CREATE TABLE IF NOT EXISTS employees (
     id                BIGSERIAL    PRIMARY KEY,
@@ -75,6 +76,7 @@ CREATE TABLE IF NOT EXISTS backups (
     ended_at    TIMESTAMP,                              -- 진행중이면 NULL
     status      VARCHAR(20)  NOT NULL DEFAULT 'IN_PROGRESS',
     file_id     BIGINT,                                 -- 완료/실패 시 파일 연결
+    last_history_id BIGINT,                              -- 백업 시점 마지막 이력 ID
 
     CONSTRAINT chk_backup_status CHECK (status IN ('IN_PROGRESS', 'COMPLETED', 'FAILED', 'SKIPPED')),
     CONSTRAINT fk_backup_file
@@ -82,6 +84,3 @@ CREATE TABLE IF NOT EXISTS backups (
     REFERENCES binary_contents (id)
     ON DELETE SET NULL
     );
-
-CREATE INDEX IF NOT EXISTS idx_backup_status     ON backups (status);
-CREATE INDEX IF NOT EXISTS idx_backup_started_at ON backups (started_at);
