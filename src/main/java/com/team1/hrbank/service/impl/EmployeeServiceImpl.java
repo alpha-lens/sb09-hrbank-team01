@@ -215,6 +215,12 @@ public class EmployeeServiceImpl implements EmployeeService {
     Employee employee = employeeRepository.findById(id)
         .orElseThrow(() -> new NoSuchElementException("해당 직원을 찾을 수 없습니다 : " + id));
 
+    if (request.email() != null && !request.email().equals(employee.getEmail())) {
+      if (employeeRepository.existsByEmail(request.email())) {
+        throw new IllegalArgumentException("이미 사용 중인 이메일입니다: " + request.email());
+      }
+    }
+
     Department department = null;
     if (request.departmentId() != null) {
       department = departmentRepository.findById(request.departmentId())
