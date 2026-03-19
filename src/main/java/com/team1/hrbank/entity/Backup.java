@@ -1,6 +1,5 @@
 package com.team1.hrbank.entity;
 
-import com.team1.hrbank.entity.base.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

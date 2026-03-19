@@ -10,7 +10,6 @@ import com.team1.hrbank.dto.cursor.CursorPageResponse;
 import com.team1.hrbank.dto.request.EmployeeHistoryCreateRequest;
 import com.team1.hrbank.dto.request.EmployeeHistorySearchRequest;
 import com.team1.hrbank.entity.EmployeeHistory;
-import com.team1.hrbank.entity.HistoryType;
 import com.team1.hrbank.global.ResourceNotFoundException;
 import com.team1.hrbank.mapper.EmployeeHistoryMapper;
 import com.team1.hrbank.repository.EmployeeHistoryRepository;
