@@ -1,0 +1,6 @@
+[phases.build]
+dependsOn = ["setup"]
+nixPkgs = ['jdk17']
+
+[phases.setup]
+nixPkgs = ['jdk17']
