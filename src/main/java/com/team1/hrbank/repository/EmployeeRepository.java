@@ -34,21 +34,22 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long>,
       @Param("endDate") LocalDate endDate);
 
   @Query(value = """
-      SELECT 
-          to_char(hire_date, 
-              CASE 
-                  WHEN :unit = 'DAY' THEN 'YYYY-MM-DD'
-                  WHEN :unit = 'MONTH' THEN 'YYYY-MM'
-                  WHEN :unit = 'YEAR' THEN 'YYYY'
-                  ELSE 'YYYY-MM' 
-              END
-          ) as period,
-          COUNT(*)::int as count
-      FROM employees
-      WHERE hire_date BETWEEN :fromDate AND :endDate
-      GROUP BY period
-      ORDER BY period ASC
-      """, nativeQuery = true)
+    SELECT 
+        to_char(hire_date, 
+            CASE 
+                WHEN :unit = 'DAY' THEN 'YYYY-MM-DD'
+                WHEN :unit = 'MONTH' THEN 'YYYY-MM'
+                WHEN :unit = 'YEAR' THEN 'YYYY'
+                ELSE 'YYYY-MM' 
+            END
+        ) as period,
+        COUNT(*)::int as count
+    FROM employees
+    WHERE hire_date BETWEEN :fromDate AND :endDate
+      AND status != 'RESIGNED'
+    GROUP BY period
+    ORDER BY period ASC
+    """, nativeQuery = true)
   List<EmployeeTrendMapping> getTrendData(@Param("fromDate") LocalDate fromDate,
       @Param("endDate") LocalDate endDate, @Param("unit") String unit);
 
@@ -88,7 +89,7 @@ public interface EmployeeRepository extends JpaRepository<Employee, Long>,
 
   boolean existsByEmail(String email);
 
-  @Query("SELECT COUNT(e) FROM Employee e WHERE e.hireDate < :date")
+  @Query("SELECT COUNT(e) FROM Employee e WHERE e.hireDate < :date AND e.status != 'RESIGNED'")
   int countTotalEmployeesBefore(@Param("date") LocalDate date);
          
   List<Employee> findByDepartmentIdAndStatus(Long departmentId, EmployeeStatus status);
