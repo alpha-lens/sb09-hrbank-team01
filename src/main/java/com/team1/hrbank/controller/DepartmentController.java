@@ -1,7 +1,7 @@
 package com.team1.hrbank.controller;
 
-import com.team1.hrbank.dto.cursor.CursorPageResponse;
 import com.team1.hrbank.dto.DepartmentDto;
+import com.team1.hrbank.dto.cursor.CursorPageResponse;
 import com.team1.hrbank.dto.request.DepartmentCreateRequest;
 import com.team1.hrbank.dto.request.DepartmentSearchRequest;
 import com.team1.hrbank.dto.request.DepartmentUpdateRequest;
