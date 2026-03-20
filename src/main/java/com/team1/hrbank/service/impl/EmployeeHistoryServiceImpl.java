@@ -10,7 +10,6 @@ import com.team1.hrbank.dto.cursor.CursorPageResponse;
 import com.team1.hrbank.dto.request.EmployeeHistoryCreateRequest;
 import com.team1.hrbank.dto.request.EmployeeHistorySearchRequest;
 import com.team1.hrbank.entity.EmployeeHistory;
-import com.team1.hrbank.entity.HistoryType;
 import com.team1.hrbank.global.ResourceNotFoundException;
 import com.team1.hrbank.mapper.EmployeeHistoryMapper;
 import com.team1.hrbank.repository.EmployeeHistoryRepository;
@@ -80,7 +79,7 @@ public class EmployeeHistoryServiceImpl implements EmployeeHistoryService {
       cursorId = request.idAfter();
     }
 
-    String sortField = "at".equals(request.sortField()) ? "createdAt" : "ipAddress";
+    String sortField = "at".equals(request.sortField()) ? "created_at" : "ip_address";
 
     Sort.Direction direction = Sort.Direction.fromString(
         request.sortDirection() != null ? request.sortDirection() : "desc"
@@ -88,11 +87,14 @@ public class EmployeeHistoryServiceImpl implements EmployeeHistoryService {
 
     Pageable pageable = PageRequest.of(0, request.size() + 1, Sort.by(direction, sortField));
 
+    String typeStr = (request.type() == null || request.type().isBlank() || "ALL".equalsIgnoreCase(request.type()))
+        ? null : request.type().toUpperCase();
+
     List<EmployeeHistory> histories = employeeHistoryRepository.findHistoriesWithConditions(
         request.employeeNumber(),
         request.memo(),
         request.ipAddress(),
-        request.historyType(),
+        typeStr,
         request.atFrom(),
         request.atTo(),
         cursorId,
@@ -103,7 +105,7 @@ public class EmployeeHistoryServiceImpl implements EmployeeHistoryService {
         request.employeeNumber(),
         request.memo(),
         request.ipAddress(),
-        request.historyType(),
+        typeStr,
         request.atFrom(),
         request.atTo()
     );

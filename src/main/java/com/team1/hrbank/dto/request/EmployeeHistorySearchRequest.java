@@ -1,6 +1,5 @@
 package com.team1.hrbank.dto.request;
 
-import com.team1.hrbank.entity.HistoryType;
 import java.time.Instant;
 import lombok.Builder;
 
@@ -27,10 +26,4 @@ public record EmployeeHistorySearchRequest(
       sortDirection = "desc";
   }
 
-  public HistoryType historyType() {
-    if (type == null || type.isBlank() || "ALL".equalsIgnoreCase(type)) {
-      return null;
-    }
-    return HistoryType.valueOf(type.toUpperCase());
-  }
 }
