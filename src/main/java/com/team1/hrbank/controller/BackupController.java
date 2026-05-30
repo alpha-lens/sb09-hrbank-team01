@@ -18,7 +18,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
-import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -29,6 +28,14 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.text.Normalizer;
+import java.nio.file.Paths;
+import java.time.Instant;
 
 @Slf4j
 @RestController
@@ -127,12 +134,13 @@ public class BackupController {
       return ResponseEntity.notFound().build();
     }
 
+    String fileName = Normalizer.normalize(downloadInfo.fileName(), Normalizer.Form.NFC);
+    String encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8)
+        .replaceAll("\\+", "%20");
+
     return ResponseEntity.ok()
         .header(HttpHeaders.CONTENT_DISPOSITION,
-            ContentDisposition.attachment()
-                .filename(downloadInfo.fileName(), StandardCharsets.UTF_8)
-                .build()
-                .toString())
+            "attachment; filename=\"" + encodedFileName + "\"; filename*=UTF-8''" + encodedFileName)
         .contentType(MediaType.parseMediaType(downloadInfo.contentType()))
         .body(resource);
   }

@@ -79,7 +79,7 @@ public class EmployeeHistoryServiceImpl implements EmployeeHistoryService {
       cursorId = request.idAfter();
     }
 
-    String sortField = "at".equals(request.sortField()) ? "createdAt" : "ipAddress";
+    String sortField = "at".equals(request.sortField()) ? "created_at" : "ip_address";
 
     Sort.Direction direction = Sort.Direction.fromString(
         request.sortDirection() != null ? request.sortDirection() : "desc"
@@ -87,11 +87,14 @@ public class EmployeeHistoryServiceImpl implements EmployeeHistoryService {
 
     Pageable pageable = PageRequest.of(0, request.size() + 1, Sort.by(direction, sortField));
 
+    String typeStr = (request.type() == null || request.type().isBlank() || "ALL".equalsIgnoreCase(request.type()))
+        ? null : request.type().toUpperCase();
+
     List<EmployeeHistory> histories = employeeHistoryRepository.findHistoriesWithConditions(
         request.employeeNumber(),
         request.memo(),
         request.ipAddress(),
-        request.historyType(),
+        typeStr,
         request.atFrom(),
         request.atTo(),
         cursorId,
@@ -102,7 +105,7 @@ public class EmployeeHistoryServiceImpl implements EmployeeHistoryService {
         request.employeeNumber(),
         request.memo(),
         request.ipAddress(),
-        request.historyType(),
+        typeStr,
         request.atFrom(),
         request.atTo()
     );

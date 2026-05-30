@@ -57,7 +57,7 @@ public class BinaryContentController {
         String encodedFileName = java.net.URLEncoder.encode(fileName, StandardCharsets.UTF_8)
                 .replaceAll("\\+", "%20");
         headers.set(HttpHeaders.CONTENT_DISPOSITION,
-                "attachment; filename=\"" + fileName + "\"; filename*=UTF-8''" + encodedFileName);
+                "attachment; filename=\"" + encodedFileName + "\"; filename*=UTF-8''" + encodedFileName);
 
         return new ResponseEntity<>(bytes, headers, HttpStatus.OK);
     }

@@ -13,7 +13,7 @@ public class BackupScheduler {
 
   private final BackupService backupService;
 
-  @Scheduled(fixedRateString = "${backup.schedule.rate:3600000}")
+  @Scheduled(initialDelayString = "${backup.schedule.rate:3600000}", fixedRateString = "${backup.schedule.rate:3600000}")
   public void autoBackup() {
     log.info("[Backup] 자동 백업 시작");
     try {
